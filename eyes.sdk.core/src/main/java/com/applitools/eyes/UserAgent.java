@@ -73,9 +73,15 @@ public class UserAgent {
      * @return A representation of the user agent string.
      */
     public static UserAgent ParseUserAgentString(String userAgent, boolean unknowns) {
-        ArgumentGuard.notNull(userAgent, "userAgent");
+        if (userAgent == null) {
+            return null;
+        }
 
         userAgent = userAgent.trim();
+        if (userAgent.startsWith("useragent:")) {
+            userAgent = userAgent.substring(10);
+        }
+
         UserAgent result = new UserAgent();
 
         // OS

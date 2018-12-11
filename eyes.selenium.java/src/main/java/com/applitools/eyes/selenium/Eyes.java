@@ -97,7 +97,7 @@ public class Eyes extends EyesBase {
     private SeleniumJavaScriptExecutor jsExecutor;
 
     private UserAgent userAgent;
-    private ImageProvider imageProvider;
+    protected ImageProvider imageProvider;
     private RegionPositionCompensation regionPositionCompensation;
     private WebElement targetElement = null;
     private PositionMemento positionMemento;
@@ -139,6 +139,25 @@ public class Eyes extends EyesBase {
         regionVisibilityStrategyHandler.set(new MoveToRegionVisibilityStrategy(logger));
         EyesTargetLocator.initLogger(logger);
     }
+
+    // *** FOR APPIUM
+    protected SeleniumJavaScriptExecutor getJsExecutor() {
+        return jsExecutor;
+    }
+
+    protected void setJsExecutor(SeleniumJavaScriptExecutor jsExecutor) {
+        this.jsExecutor = jsExecutor;
+    }
+
+    protected UserAgent getUserAgent() {
+        return userAgent;
+    }
+
+    protected void setUserAgent(UserAgent userAgent) {
+        this.userAgent = userAgent;
+    }
+    // *****
+
 
     @Override
     public String getBaseAgentId() {
@@ -217,7 +236,7 @@ public class Eyes extends EyesBase {
     public void setStitchMode(StitchMode mode) {
         logger.verbose("setting stitch mode to " + mode);
         getConfig().setStitchMode(mode);
-        if (driver != null) {
+        if (getEyesDriver() != null) {
             setPositionProvider(createPositionProvider());
         }
     }
@@ -256,8 +275,8 @@ public class Eyes extends EyesBase {
      */
     public void setRotation(ImageRotation rotation) {
         this.rotation = rotation;
-        if (driver != null) {
-            driver.setRotation(rotation);
+        if (getEyesDriver() != null) {
+            getEyesDriver().setRotation(rotation);
         }
     }
 
@@ -321,6 +340,11 @@ public class Eyes extends EyesBase {
         return open(driver);
     }
 
+    protected void initImageProvider() {
+        imageProvider = ImageProviderFactory.getImageProvider(getUserAgent(), this, logger, getEyesDriver());
+    }
+
+
     protected WebDriver open(WebDriver driver) {
         if (getIsDisabled()) {
             logger.verbose("Ignored");
@@ -329,39 +353,34 @@ public class Eyes extends EyesBase {
 
         initDriver(driver);
 
-        screenshotFactory = new EyesWebDriverScreenshotFactory(logger, this.driver);
+        screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
 
         ensureViewportSize();
 
         openBase();
 
-        String uaString = sessionStartInfo.getEnvironment().getInferred();
-        if (uaString != null) {
-            if (uaString.startsWith("useragent:")) {
-                uaString = uaString.substring(10);
-            }
-            userAgent = UserAgent.ParseUserAgentString(uaString, true);
-        }
+        setUserAgent(UserAgent.ParseUserAgentString(sessionStartInfo.getEnvironment().getInferred(), true));
 
-        imageProvider = ImageProviderFactory.getImageProvider(userAgent, this, logger, this.driver);
-        regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(userAgent, this, logger);
+        initImageProvider();
+        regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(getUserAgent(),
+                this, logger);
 
         ArgumentGuard.notNull(driver, "driver");
 
         devicePixelRatio = UNKNOWN_DEVICE_PIXEL_RATIO;
-        this.jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
+        setJsExecutor(new SeleniumJavaScriptExecutor(getEyesDriver()));
 
-        this.driver.setRotation(rotation);
-        return this.driver;
+        getEyesDriver().setRotation(getRotation());
+        return getEyesDriver();
     }
 
     private void ensureViewportSize() {
         if (this.config.getViewportSize() == null) {
-            this.config.setViewportSize(driver.getDefaultContentViewportSize());
+            this.config.setViewportSize(getEyesDriver().getDefaultContentViewportSize());
         }
     }
 
-    private void initDriver(WebDriver driver) {
+    protected void initDriver(WebDriver driver) {
         if (driver instanceof RemoteWebDriver) {
             this.driver = new EyesWebDriver(logger, this, (RemoteWebDriver) driver);
         } else if (driver instanceof EyesWebDriver) {
@@ -387,9 +406,9 @@ public class Eyes extends EyesBase {
         logger.verbose("initializing position provider. stitchMode: " + stitchMode);
         switch (stitchMode) {
             case CSS:
-                return new CssTranslatePositionProvider(logger, this.jsExecutor, scrollRootElement);
+                return new CssTranslatePositionProvider(logger, getJsExecutor(), scrollRootElement);
             default:
-                return new ScrollPositionProvider(logger, this.jsExecutor);
+                return new ScrollPositionProvider(logger, getJsExecutor());
         }
     }
 
@@ -702,7 +721,7 @@ public class Eyes extends EyesBase {
             //check(settings);
         }
 
-        this.scrollRootElement = driver.findElement(By.tagName("html"));
+        this.scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
         this.currentFramePositionProvider = null;
 
         matchRegions(getRegions, checkSettingsInternalDictionary, checkSettings);
@@ -715,7 +734,7 @@ public class Eyes extends EyesBase {
 
         if (getRegions.size() == 0) return;
 
-        this.originalFC = driver.getFrameChain().clone();
+        this.originalFC = getEyesDriver().getFrameChain().clone();
 
         FrameChain originalFC = tryHideScrollbars();
 
@@ -731,7 +750,7 @@ public class Eyes extends EyesBase {
                 bBox, positionProviderHandler.get());
 
         debugScreenshotsProvider.save(screenshotImage, "original");
-        EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage, null, bBox.getNegativeLocation());
+        EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage, null, bBox.getNegativeLocation());
 
         for (int i = 0; i < checkSettings.length; ++i) {
             if (((Hashtable<Integer, GetRegion>) getRegions).containsKey(i)) {
@@ -743,7 +762,7 @@ public class Eyes extends EyesBase {
         }
 
         tryRestoreScrollbars(originalFC);
-        ((EyesTargetLocator) driver.switchTo()).frames(this.originalFC);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(this.originalFC);
     }
 
     private List<EyesScreenshot> getSubScreenshots(EyesWebDriverScreenshot screenshot, GetRegion getRegion) {
@@ -778,7 +797,7 @@ public class Eyes extends EyesBase {
     private Region findBoundingBox(Dictionary<Integer, GetRegion> getRegions, ICheckSettings[] checkSettings) {
         RectangleSize rectSize = getViewportSize();
 
-        EyesScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver,
+        EyesScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(),
                 new BufferedImage(rectSize.getWidth(), rectSize.getHeight(), BufferedImage.TYPE_INT_RGB));
 
         return findBoundingBox(getRegions, checkSettings, screenshot);
@@ -809,17 +828,17 @@ public class Eyes extends EyesBase {
             By selector = frameLocator.getFrameSelector();
             List<WebElement> possibleFrames = null;
             if (selector != null) {
-                possibleFrames = driver.findElements(selector);
+                possibleFrames = getEyesDriver().findElements(selector);
             } else {
                 String nameOrId = frameLocator.getFrameNameOrId();
                 if (nameOrId != null) {
-                    possibleFrames = driver.findElementsById(nameOrId);
+                    possibleFrames = getEyesDriver().findElementsById(nameOrId);
                     if (possibleFrames.size() == 0) {
-                        possibleFrames = driver.findElementsByName(nameOrId);
+                        possibleFrames = getEyesDriver().findElementsByName(nameOrId);
                         if (possibleFrames.size() == 0) {
                             Integer frameIndex = frameLocator.getFrameIndex();
                             if (frameIndex != null) {
-                                possibleFrames = driver.findElements(By.cssSelector(String.format("iframe:nth-of-type(%d)", frameIndex)));
+                                possibleFrames = getEyesDriver().findElements(By.cssSelector(String.format("iframe:nth-of-type(%d)", frameIndex)));
                             }
                         }
                     }
@@ -837,7 +856,7 @@ public class Eyes extends EyesBase {
         By targetSelector = seleniumCheckTarget.getTargetSelector();
         WebElement targetElement = seleniumCheckTarget.getTargetElement();
         if (targetElement == null && targetSelector != null) {
-            targetElement = this.driver.findElement(targetSelector);
+            targetElement = this.getEyesDriver().findElement(targetSelector);
         }
         return targetElement;
     }
@@ -855,9 +874,9 @@ public class Eyes extends EyesBase {
 
     @Override
     public String tryCaptureDom() {
-        ElementPositionProvider positionProvider = new ElementPositionProvider(logger, driver, scrollRootElement);
+        ElementPositionProvider positionProvider = new ElementPositionProvider(logger, getEyesDriver(), scrollRootElement);
         DomCapture domCapture = new DomCapture(this);
-        String fullWindowDom = domCapture.getFullWindowDom(this.driver, positionProvider);
+        String fullWindowDom = domCapture.getFullWindowDom(getEyesDriver(), positionProvider);
         if (this.domCaptureListener != null) {
             this.domCaptureListener.onDomCaptureComplete(fullWindowDom);
         }
@@ -886,15 +905,15 @@ public class Eyes extends EyesBase {
 
         ValidationInfo validationInfo = this.fireValidationWillStartEvent(name);
 
-        if (!EyesSeleniumUtils.isMobileDevice(driver)) {
-            logger.verbose("URL: " + driver.getCurrentUrl());
+        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+            logger.verbose("URL: " + getEyesDriver().getCurrentUrl());
         }
 
         this.stitchContent = checkSettingsInternal.getStitchContent();
 
         final Region targetRegion = checkSettingsInternal.getTargetRegion();
 
-        this.originalFC = driver.getFrameChain().clone();
+        this.originalFC = getEyesDriver().getFrameChain().clone();
 
         int switchedToFrameCount = this.switchToFrame(seleniumCheckTarget);
 
@@ -902,7 +921,7 @@ public class Eyes extends EyesBase {
 
         MatchResult result = null;
 
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         FrameChain originalFC = null;
         if (targetRegion != null) {
             logger.verbose("have target region");
@@ -935,14 +954,14 @@ public class Eyes extends EyesBase {
                 }
             } else {
                 logger.verbose("default case");
-                if (!EyesSeleniumUtils.isMobileDevice(driver)) {
+                if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
                     // required to prevent cut line on the last stitched part of the page on some browsers (like firefox).
                     switchTo.defaultContent();
                     originalFC = tryHideScrollbars();
-                    currentFramePositionProvider = createPositionProvider(driver.findElement(By.tagName("html")));
+                    currentFramePositionProvider = createPositionProvider(getEyesDriver().findElement(By.tagName("html")));
                 }
                 result = this.checkWindowBase(NullRegionProvider.INSTANCE, name, false, checkSettings);
-                if (!EyesSeleniumUtils.isMobileDevice(driver)) {
+                if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
                     switchTo.frames(this.originalFC);
                 }
             }
@@ -953,7 +972,7 @@ public class Eyes extends EyesBase {
         }
 
         while (switchedToFrameCount > 0) {
-            this.driver.switchTo().parentFrame();
+            getEyesDriver().switchTo().parentFrame();
             switchedToFrameCount--;
         }
 
@@ -962,14 +981,14 @@ public class Eyes extends EyesBase {
             this.positionMemento = null;
         }
 
-        if (!EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
             switchTo.resetScroll();
 
             if (originalFC != null) {
                 tryRestoreScrollbars(originalFC);
             }
 
-            trySwitchToFrames(driver, switchTo, this.originalFC);
+            trySwitchToFrames(getEyesDriver(), switchTo, this.originalFC);
         }
 
         this.stitchContent = false;
@@ -982,11 +1001,11 @@ public class Eyes extends EyesBase {
     }
 
     protected MatchResult checkFrameFluent(String name, ICheckSettings checkSettings) {
-        FrameChain frameChain = driver.getFrameChain().clone();
+        FrameChain frameChain = getEyesDriver().getFrameChain().clone();
         Frame targetFrame = frameChain.pop();
         this.targetElement = targetFrame.getReference();
 
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.framesDoScroll(frameChain);
 
         MatchResult result = this.checkRegion(name, checkSettings);
@@ -1011,7 +1030,7 @@ public class Eyes extends EyesBase {
     }
 
     private boolean switchToFrame(ISeleniumFrameCheckTarget frameTarget) {
-        WebDriver.TargetLocator switchTo = this.driver.switchTo();
+        WebDriver.TargetLocator switchTo = getEyesDriver().switchTo();
 
         if (frameTarget.getFrameIndex() != null) {
             switchTo.frame(frameTarget.getFrameIndex());
@@ -1032,7 +1051,7 @@ public class Eyes extends EyesBase {
         }
 
         if (frameTarget.getFrameSelector() != null) {
-            WebElement frameElement = this.driver.findElement(frameTarget.getFrameSelector());
+            WebElement frameElement = getEyesDriver().findElement(frameTarget.getFrameSelector());
             if (frameElement != null) {
                 switchTo.frame(frameElement);
                 return true;
@@ -1073,10 +1092,10 @@ public class Eyes extends EyesBase {
 
             scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
 
-            EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+            EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
             switchTo.frames(fc);
 
-            final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
+            final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
 
             logger.verbose("replacing regionToCheck");
             setRegionToCheck(screenshot.getFrameWindow());
@@ -1087,12 +1106,12 @@ public class Eyes extends EyesBase {
 
     private FrameChain ensureFrameVisible() {
         logger.verbose("scrollRootElement_: " + scrollRootElement);
-        FrameChain originalFC = driver.getFrameChain().clone();
-        FrameChain fc = driver.getFrameChain().clone();
+        FrameChain originalFC = getEyesDriver().getFrameChain().clone();
+        FrameChain fc = getEyesDriver().getFrameChain().clone();
         while (fc.size() > 0) {
             logger.verbose("fc.Count: " + fc.size());
-            //driver.getRemoteWebDriver().switchTo().parentFrame();
-            EyesTargetLocator.parentFrame(driver.getRemoteWebDriver().switchTo(), fc);
+            //getEyesDriver().getRemoteWebDriver().switchTo().parentFrame();
+            EyesTargetLocator.parentFrame(getEyesDriver().getRemoteWebDriver().switchTo(), fc);
             Frame prevFrame = fc.pop();
             Frame frame = fc.peek();
             WebElement scrollRootElement = null;
@@ -1105,7 +1124,7 @@ public class Eyes extends EyesBase {
                     scrollRootElement = frame.getScrollRootElement();
                 }
                 if (scrollRootElement == null) {
-                    scrollRootElement = driver.findElement(By.tagName("html"));
+                    scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
                 }
             }
             logger.verbose("scrollRootElement: " + scrollRootElement);
@@ -1116,7 +1135,7 @@ public class Eyes extends EyesBase {
             Region reg = new Region(Location.ZERO, prevFrame.getInnerSize());
             effectiveViewport.intersect(reg);
         }
-        ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
         return originalFC;
     }
 
@@ -1126,15 +1145,15 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (EyesSeleniumUtils.isMobileDevice(driver.getRemoteWebDriver())) {
+        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver().getRemoteWebDriver())) {
             logger.log("NATIVE context identified, skipping 'ensure element visible'");
             return;
         }
 
-        FrameChain originalFC = driver.getFrameChain().clone();
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        FrameChain originalFC = getEyesDriver().getFrameChain().clone();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
-        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, driver, element);
+        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, getEyesDriver(), element);
         Region elementBounds = eyesRemoteWebElement.getBounds();
 
         Location currentFrameOffset = originalFC.getCurrentFrameOffset();
@@ -1153,7 +1172,7 @@ public class Eyes extends EyesBase {
             WebElement scrollRootElement;
             if (originalFC.size() > 0 && !element.equals(originalFC.peek().getReference())) {
                 switchTo.frames(originalFC);
-                scrollRootElement = driver.findElement(By.tagName("html"));
+                scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
             } else {
                 scrollRootElement = this.scrollRootElement;
             }
@@ -1168,10 +1187,10 @@ public class Eyes extends EyesBase {
             logger.log("WARNING: no region visibility strategy! returning an empty region!");
             return Region.EMPTY;
         }
-        FrameChain originalFrameChain = driver.getFrameChain().clone();
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        FrameChain originalFrameChain = getEyesDriver().getFrameChain().clone();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.defaultContent();
-        ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+        ScrollPositionProvider spp = new ScrollPositionProvider(logger, getJsExecutor());
         Location location;
         try {
             location = spp.getCurrentPosition();
@@ -1662,6 +1681,22 @@ public class Eyes extends EyesBase {
         check(tag, Target.frame(frameReference).region(selector).timeout(matchTimeout).fully(stitchContent));
     }
 
+    protected double extractDevicePixelRatio() {
+        return EyesSeleniumUtils.getDevicePixelRatio(getJsExecutor());
+    }
+
+    protected void tryUpdateDevicePixelRatio() {
+        logger.verbose("Trying to extract device pixel ratio...");
+        try {
+            devicePixelRatio = extractDevicePixelRatio();
+        } catch (Exception e) {
+            logger.verbose(
+                    "Failed to extract device pixel ratio! Using default.");
+            devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
+        }
+        logger.verbose(String.format("Device pixel ratio: %f", devicePixelRatio));
+    }
+
     /**
      * Updates the state of scaling related parameters.
      */
@@ -1670,15 +1705,8 @@ public class Eyes extends EyesBase {
         if (devicePixelRatio == UNKNOWN_DEVICE_PIXEL_RATIO &&
                 scaleProviderHandler.get() instanceof NullScaleProvider) {
             ScaleProviderFactory factory;
-            logger.verbose("Trying to extract device pixel ratio...");
-            try {
-                devicePixelRatio = EyesSeleniumUtils.getDevicePixelRatio(this.jsExecutor);
-            } catch (Exception e) {
-                logger.verbose(
-                        "Failed to extract device pixel ratio! Using default.");
-                devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
-            }
-            logger.verbose(String.format("Device pixel ratio: %f", devicePixelRatio));
+
+            tryUpdateDevicePixelRatio();
 
             logger.verbose("Setting scale provider...");
             try {
@@ -1698,8 +1726,8 @@ public class Eyes extends EyesBase {
     }
 
     private ScaleProviderFactory getScaleProviderFactory() {
-        WebElement element = driver.findElement(By.tagName("html"));
-        RectangleSize entireSize = EyesSeleniumUtils.getEntireElementSize(jsExecutor, element);
+        WebElement element = getEyesDriver().findElement(By.tagName("html"));
+        RectangleSize entireSize = EyesSeleniumUtils.getEntireElementSize(getJsExecutor(), element);
         return new ContextBasedScaleProviderFactory(logger, entireSize,
                 viewportSizeHandler.get(), devicePixelRatio, false,
                 scaleProviderHandler);
@@ -1717,7 +1745,7 @@ public class Eyes extends EyesBase {
             checkFrameOrElement = true;
 
             logger.verbose("Getting screenshot as base64..");
-            String screenshot64 = driver.getScreenshotAs(OutputType.BASE64);
+            String screenshot64 = getEyesDriver().getScreenshotAs(OutputType.BASE64);
             logger.verbose("Done! Creating image object...");
             BufferedImage screenshotImage = ImageUtils.imageFromBase64(screenshot64);
 
@@ -1726,7 +1754,7 @@ public class Eyes extends EyesBase {
 
             screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
             logger.verbose("Done! Building required object...");
-            final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
+            final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
             logger.verbose("Done!");
 
             logger.verbose("replacing regionToCheck");
@@ -1942,14 +1970,14 @@ public class Eyes extends EyesBase {
 
         // Since the element might already have been found using EyesWebDriver.
         final EyesRemoteWebElement eyesElement = (element instanceof EyesRemoteWebElement) ?
-                (EyesRemoteWebElement) element : new EyesRemoteWebElement(logger, driver, element);
+                (EyesRemoteWebElement) element : new EyesRemoteWebElement(logger, getEyesDriver(), element);
 
         this.regionToCheck = null;
         PositionMemento originalPositionMemento = positionProviderHandler.get().getState();
 
         ensureElementVisible(targetElement);
 
-        PositionProvider scrollPositionProvider = new ScrollPositionProvider(logger, jsExecutor);
+        PositionProvider scrollPositionProvider = new ScrollPositionProvider(logger, getJsExecutor());
         Location originalScrollPosition = scrollPositionProvider.getCurrentPosition();
 
         String originalOverflow = null;
@@ -1972,7 +2000,7 @@ public class Eyes extends EyesBase {
             if (!displayStyle.equals("inline") &&
                     elementHeight <= effectiveViewport.getHeight() &&
                     elementWidth <= effectiveViewport.getWidth()) {
-                elementPositionProvider = new ElementPositionProvider(logger, driver, eyesElement);
+                elementPositionProvider = new ElementPositionProvider(logger, getEyesDriver(), eyesElement);
             } else {
                 elementPositionProvider = null;
             }
@@ -2069,7 +2097,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring %s (different frame)", action));
             return;
@@ -2103,7 +2131,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring %s (different frame)", action));
             return;
@@ -2134,7 +2162,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring '%s' (different frame)", text));
             return;
@@ -2174,7 +2202,7 @@ public class Eyes extends EyesBase {
     public RectangleSize getViewportSize() {
         RectangleSize viewportSize = viewportSizeHandler.get();
         if (viewportSize == null) {
-            viewportSize = driver.getDefaultContentViewportSize();
+            viewportSize = getEyesDriver().getDefaultContentViewportSize();
         }
         return viewportSize;
     }
@@ -2204,20 +2232,20 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!EyesSeleniumUtils.isMobileDevice(driver)) {
-            FrameChain originalFrame = driver.getFrameChain();
-            driver.switchTo().defaultContent();
+        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+            FrameChain originalFrame = getEyesDriver().getFrameChain();
+            getEyesDriver().switchTo().defaultContent();
 
             try {
-                EyesSeleniumUtils.setViewportSize(logger, driver, size);
+                EyesSeleniumUtils.setViewportSize(logger, getEyesDriver(), size);
                 effectiveViewport = new Region(Location.ZERO, size);
             } catch (EyesException e1) {
                 // Just in case the user catches this error
-                ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
+                ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
 
                 throw new TestFailedException("Failed to set the viewport size", e1);
             }
-            ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
         }
 
         viewportSizeHandler.set(new RectangleSize(size.getWidth(), size.getHeight()));
@@ -2251,34 +2279,34 @@ public class Eyes extends EyesBase {
     }
 
     private FrameChain tryHideScrollbars() {
-        if (EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
             return new FrameChain(logger);
         }
         if (getConfig().getHideScrollbars() || (getConfig().getStitchMode() == StitchMode.CSS && stitchContent)) {
-            FrameChain originalFC = driver.getFrameChain().clone();
-            FrameChain fc = driver.getFrameChain().clone();
+            FrameChain originalFC = getEyesDriver().getFrameChain().clone();
+            FrameChain fc = getEyesDriver().getFrameChain().clone();
             Frame frame = fc.peek();
             if (fc.size() > 0) {
                 while (fc.size() > 0) {
                     logger.verbose("fc.Count = " + fc.size());
                     if (stitchContent || fc.size() != originalFC.size()) {
                         if (frame != null) {
-                            frame.hideScrollbars(driver);
+                            frame.hideScrollbars(getEyesDriver());
                         } else {
                             logger.verbose("hiding scrollbars of element (1): " + this.scrollRootElement);
-                            EyesSeleniumUtils.setOverflow(this.driver, "hidden", scrollRootElement);
+                            EyesSeleniumUtils.setOverflow(getEyesDriver(), "hidden", scrollRootElement);
                         }
                     }
-                    driver.switchTo().parentFrame();
+                    getEyesDriver().switchTo().parentFrame();
                     fc.pop();
                     frame = fc.peek();
                 }
             } else {
                 logger.verbose("hiding scrollbars of element (2): " + scrollRootElement);
-                this.originalOverflow = EyesSeleniumUtils.setOverflow(this.driver, "hidden", scrollRootElement);
+                this.originalOverflow = EyesSeleniumUtils.setOverflow(getEyesDriver(), "hidden", scrollRootElement);
             }
             logger.verbose("switching back to original frame");
-            ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
             logger.verbose("done hiding scrollbars.");
             return originalFC;
         }
@@ -2286,29 +2314,29 @@ public class Eyes extends EyesBase {
     }
 
     private void tryRestoreScrollbars(FrameChain frameChain) {
-        if (EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
             return;
         }
         if (getConfig().getHideScrollbars() || (getConfig().getStitchMode() == StitchMode.CSS && stitchContent)) {
-            ((EyesTargetLocator) driver.switchTo()).frames(frameChain);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(frameChain);
             FrameChain originalFC = frameChain.clone();
             FrameChain fc = frameChain.clone();
             if (fc.size() > 0) {
                 while (fc.size() > 0) {
                     Frame frame = fc.pop();
-                    frame.returnToOriginalOverflow(driver);
-                    EyesTargetLocator.parentFrame(driver.getRemoteWebDriver().switchTo(), fc);
+                    frame.returnToOriginalOverflow(getEyesDriver());
+                    EyesTargetLocator.parentFrame(getEyesDriver().getRemoteWebDriver().switchTo(), fc);
                 }
             } else {
                 logger.verbose("returning overflow of element to its original value: " + scrollRootElement);
-                EyesSeleniumUtils.setOverflow(driver, originalOverflow, scrollRootElement);
+                EyesSeleniumUtils.setOverflow(getEyesDriver(), originalOverflow, scrollRootElement);
             }
-            ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
             logger.verbose("done restoring scrollbars.");
         } else {
             logger.verbose("no need to restore scrollbars.");
         }
-        driver.getFrameChain().clear();
+        getEyesDriver().getFrameChain().clear();
     }
 
     @Override
@@ -2339,8 +2367,8 @@ public class Eyes extends EyesBase {
 
         logger.verbose("getScreenshot()");
 
-        FrameChain originalFrameChain = driver.getFrameChain().clone();
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        FrameChain originalFrameChain = getEyesDriver().getFrameChain().clone();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
         FullPageCaptureAlgorithm algo = createFullPageCaptureAlgorithm(scaleProviderFactory);
@@ -2350,7 +2378,7 @@ public class Eyes extends EyesBase {
         Object activeElement = null;
         if (getHideCaret()) {
             try {
-                activeElement = driver.executeScript("var activeElement = document.activeElement; activeElement && activeElement.blur(); return activeElement;");
+                activeElement = getEyesDriver().executeScript("var activeElement = document.activeElement; activeElement && activeElement.blur(); return activeElement;");
             } catch (WebDriverException e) {
                 logger.verbose("WARNING: Cannot hide caret! " + e.getMessage());
             }
@@ -2363,7 +2391,7 @@ public class Eyes extends EyesBase {
 
             BufferedImage entireFrameOrElement;
             if (elementPositionProvider == null) {
-                WebElement scrollRootElement = driver.findElement(By.tagName("html"));
+                WebElement scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
                 PositionProvider positionProvider = this.getElementPositionProvider(scrollRootElement);
                 entireFrameOrElement = algo.getStitchedRegion(regionToCheck, null, positionProvider);
             } else {
@@ -2371,7 +2399,7 @@ public class Eyes extends EyesBase {
             }
 
             logger.verbose("Building screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
+            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), entireFrameOrElement,
                     new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
         } else if (getConfig().getForceFullPageScreenshot() || stitchContent) {
             logger.verbose("Full page screenshot requested.");
@@ -2387,7 +2415,7 @@ public class Eyes extends EyesBase {
             BufferedImage fullPageImage = algo.getStitchedRegion(Region.EMPTY, null, positionProviderHandler.get());
 
             switchTo.frames(originalFrameChain);
-            result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
+            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), fullPageImage, null, originalFramePosition);
         } else {
             ensureElementVisible(this.targetElement);
 
@@ -2415,7 +2443,7 @@ public class Eyes extends EyesBase {
 
         if (getHideCaret() && activeElement != null) {
             try {
-                driver.executeScript("arguments[0].focus();", activeElement);
+                getEyesDriver().executeScript("arguments[0].focus();", activeElement);
             } catch (WebDriverException e) {
                 logger.verbose("WARNING: Could not return focus to active element! " + e.getMessage());
             }
@@ -2428,7 +2456,7 @@ public class Eyes extends EyesBase {
     private FullPageCaptureAlgorithm createFullPageCaptureAlgorithm(ScaleProviderFactory scaleProviderFactory) {
         return new FullPageCaptureAlgorithm(logger, regionPositionCompensation,
                 getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                new ScrollPositionProvider(logger, this.jsExecutor),
+                new ScrollPositionProvider(logger, getJsExecutor()),
                 scaleProviderFactory,
                 cutProviderHandler.get(),
                 getStitchOverlap(),
@@ -2439,7 +2467,7 @@ public class Eyes extends EyesBase {
     protected String getTitle() {
         if (!doNotGetTitle) {
             try {
-                return driver.getTitle();
+                return getEyesDriver().getTitle();
             } catch (Exception ex) {
                 logger.verbose("failed (" + ex.getMessage() + ")");
                 doNotGetTitle = true;
@@ -2451,7 +2479,7 @@ public class Eyes extends EyesBase {
 
     @Override
     protected String getInferredEnvironment() {
-        String userAgent = driver.getUserAgent();
+        String userAgent = getEyesDriver().getUserAgent();
         if (userAgent != null) {
             return "useragent:" + userAgent;
         }
@@ -2468,7 +2496,7 @@ public class Eyes extends EyesBase {
     protected AppEnvironment getAppEnvironment() {
 
         AppEnvironment appEnv = super.getAppEnvironment();
-        RemoteWebDriver underlyingDriver = driver.getRemoteWebDriver();
+        RemoteWebDriver underlyingDriver = getEyesDriver().getRemoteWebDriver();
         // If hostOs isn't set, we'll try and extract and OS ourselves.
         if (appEnv.getOs() == null) {
             logger.log("No OS set, checking for mobile OS...");
@@ -2510,14 +2538,14 @@ public class Eyes extends EyesBase {
     }
 
     private WebElement getScrollRootElement(IScrollRootElementContainer scrollRootElementContainer) {
-        if (!EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
             if (scrollRootElementContainer == null) {
-                return driver.findElement(By.tagName("html"));
+                return getEyesDriver().findElement(By.tagName("html"));
             }
             WebElement scrollRootElement = scrollRootElementContainer.getScrollRootElement();
             if (scrollRootElement == null) {
                 By scrollRootSelector = scrollRootElementContainer.getScrollRootSelector();
-                scrollRootElement = driver.findElement(scrollRootSelector != null ? scrollRootSelector : By.tagName("html"));
+                scrollRootElement = getEyesDriver().findElement(scrollRootSelector != null ? scrollRootSelector : By.tagName("html"));
             }
             return scrollRootElement;
         }
@@ -2546,7 +2574,7 @@ public class Eyes extends EyesBase {
     @Override
     protected String getAUTSessionId() {
         try {
-            return driver.getRemoteWebDriver().getSessionId().toString();
+            return getEyesDriver().getRemoteWebDriver().getSessionId().toString();
         } catch (Exception e) {
             logger.log("WARNING: Failed to get AUT session ID! (maybe driver is not available?). Error: "
                     + e.getMessage());
@@ -2567,7 +2595,7 @@ public class Eyes extends EyesBase {
         }
 
         public EyesSeleniumAgentSetup() {
-            remoteWebDriver = driver.getRemoteWebDriver();
+            remoteWebDriver = getEyesDriver().getRemoteWebDriver();
         }
 
         private RemoteWebDriver remoteWebDriver;
@@ -2616,6 +2644,6 @@ public class Eyes extends EyesBase {
 
     @Override
     public boolean isSendDom() {
-        return !EyesSeleniumUtils.isMobileDevice(driver) && super.isSendDom();
+        return !EyesSeleniumUtils.isMobileDevice(getEyesDriver()) && super.isSendDom();
     }
 }

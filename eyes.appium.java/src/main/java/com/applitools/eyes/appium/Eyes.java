@@ -29,7 +29,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     private static final String NATIVE_APP = "NATIVE_APP";
-    protected EyesAppiumDriver driver;
+    private EyesAppiumDriver driver;
     protected AppiumScrollPositionProvider positionProvider; // hiding EyesBase.positionProvider, because Appium _only_ has a scroll position provider
 
     public Eyes() {
@@ -38,8 +38,6 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     private void init() {
-        // FIXME: 19/06/2018 This is no longer the way to set rotation handler
-        EyesSeleniumUtils.setImageOrientationHandlerHandler(new AppiumImageOrientationHandler());
         // FIXME: 19/06/2018 Not relevant anymore (both the JS handler and treating EyesSeleniumUtils as static)
 //        EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));
     }
