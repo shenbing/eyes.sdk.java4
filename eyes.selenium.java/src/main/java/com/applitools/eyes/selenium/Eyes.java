@@ -74,7 +74,7 @@ public class Eyes extends EyesBase {
     private static final int DEFAULT_WAIT_BEFORE_SCREENSHOTS = 100;
 
     private EyesWebDriver driver;
-    private boolean doNotGetTitle;
+    protected boolean doNotGetTitle;
 
     private boolean checkFrameOrElement;
 
@@ -143,6 +143,10 @@ public class Eyes extends EyesBase {
     @Override
     public String getBaseAgentId() {
         return "eyes.selenium.java/3.141.3";
+    }
+
+    public EyesWebDriver getEyesDriver() {
+        return driver;
     }
 
     public WebDriver getDriver() {
@@ -2406,7 +2410,7 @@ public class Eyes extends EyesBase {
             }
 
             logger.verbose("Creating screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
+            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
         }
 
         if (getHideCaret() && activeElement != null) {

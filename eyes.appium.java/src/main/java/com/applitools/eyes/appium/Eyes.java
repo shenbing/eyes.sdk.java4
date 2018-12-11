@@ -44,8 +44,9 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 //        EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));
     }
 
-    protected EyesAppiumDriver getEyesDriver() {
-        return this.driver;
+    @Override
+    public EyesAppiumDriver getEyesDriver() {
+        return driver;
     }
 
     @Override
