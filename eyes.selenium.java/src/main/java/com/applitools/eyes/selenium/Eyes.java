@@ -237,7 +237,7 @@ public class Eyes extends EyesBase {
         logger.verbose("setting stitch mode to " + mode);
         getConfig().setStitchMode(mode);
         if (getEyesDriver() != null) {
-            setPositionProvider(createPositionProvider());
+            positionProviderHandler.set(createPositionProvider());
         }
     }
 
@@ -899,7 +899,7 @@ public class Eyes extends EyesBase {
         this.scrollRootElement = this.getScrollRootElement(seleniumCheckTarget);
 
         currentFramePositionProvider = null;
-        setPositionProvider(createPositionProvider());
+        positionProviderHandler.set(createPositionProvider());
 
         logger.verbose(String.format("check(\"%s\", checkSettings) - begin", name));
 

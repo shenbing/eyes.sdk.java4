@@ -124,16 +124,28 @@ public abstract class EyesBase {
         config = new Configuration();
     }
 
+    protected void initPositionProvider(boolean hardReset) {
+        if (hardReset) {
+            positionProviderHandler = new SimplePropertyHandler<>();
+
+        } else if (positionProviderHandler == null) {
+            positionProviderHandler = new SimplePropertyHandler<>();
+            positionProviderHandler.set(new InvalidPositionProvider());
+        }
+    }
+
     /**
      * @param hardReset If false, init providers only if they're not initialized.
      */
     private void initProviders(boolean hardReset) {
+
+        initPositionProvider(hardReset);
+
         if (hardReset) {
             scaleProviderHandler = new SimplePropertyHandler<>();
             scaleProviderHandler.set(new NullScaleProvider());
             cutProviderHandler = new SimplePropertyHandler<>();
             cutProviderHandler.set(new NullCutProvider());
-            positionProviderHandler = new SimplePropertyHandler<>();
             positionProviderHandler.set(new InvalidPositionProvider());
             viewportSizeHandler = new SimplePropertyHandler<>();
             viewportSizeHandler.set(null);
@@ -149,11 +161,6 @@ public abstract class EyesBase {
         if (cutProviderHandler == null) {
             cutProviderHandler = new SimplePropertyHandler<>();
             cutProviderHandler.set(new NullCutProvider());
-        }
-
-        if (positionProviderHandler == null) {
-            positionProviderHandler = new SimplePropertyHandler<>();
-            positionProviderHandler.set(new InvalidPositionProvider());
         }
 
 
