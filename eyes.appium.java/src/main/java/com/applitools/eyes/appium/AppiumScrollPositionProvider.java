@@ -148,7 +148,7 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         return getCurrentPosition(false);
     }
 
-    public abstract Location setPosition(Location location);
+    public abstract void setPosition(Location location);
 
     public abstract void setPosition(WebElement element);
 

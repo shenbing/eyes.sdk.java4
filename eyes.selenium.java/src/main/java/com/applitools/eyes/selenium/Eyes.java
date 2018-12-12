@@ -98,7 +98,7 @@ public class Eyes extends EyesBase {
 
     private UserAgent userAgent;
     protected ImageProvider imageProvider;
-    private RegionPositionCompensation regionPositionCompensation;
+    protected RegionPositionCompensation regionPositionCompensation;
     private WebElement targetElement = null;
     private PositionMemento positionMemento;
     private Region effectiveViewport = Region.EMPTY;
@@ -1725,7 +1725,7 @@ public class Eyes extends EyesBase {
         return new ScaleProviderIdentityFactory(scaleProviderHandler.get(), nullProvider);
     }
 
-    private ScaleProviderFactory getScaleProviderFactory() {
+    protected ScaleProviderFactory getScaleProviderFactory() {
         WebElement element = getEyesDriver().findElement(By.tagName("html"));
         RectangleSize entireSize = EyesSeleniumUtils.getEntireElementSize(getJsExecutor(), element);
         return new ContextBasedScaleProviderFactory(logger, entireSize,

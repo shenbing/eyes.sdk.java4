@@ -32,7 +32,6 @@ public class EyesAppiumDriver extends EyesWebDriver {
     public AppiumDriver getRemoteWebDriver () { return (AppiumDriver) this.driver; }
 
 
-    @Override
     public EyesAppiumElement getEyesElement (WebElement element) {
         if (element instanceof EyesAppiumElement) {
             return (EyesAppiumElement) element;

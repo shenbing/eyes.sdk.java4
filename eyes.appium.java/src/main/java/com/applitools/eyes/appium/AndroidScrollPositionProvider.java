@@ -63,15 +63,17 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         return pos;
     }
 
-    public Location setPosition(Location location) {
+    public void setPosition(Location location) {
         if (location.getY() != 0 && location.getX() != 0) {
             logger.log("Warning: tried to set position on an Android scroll view, which is not possible");
-            return getCurrentPosition();
+            // FIXME: 12/12/2018 remove this
+//            return getCurrentPosition();
         }
 
         if (location.getY() == curScrollPos.getY() && location.getX() == curScrollPos.getX()) {
             logger.log("Already at the desired position, doing nothing");
-            return curScrollPos;
+            // FIXME: 12/12/2018 remove this
+//            return curScrollPos;
         } else {
             logger.verbose(
                 "Setting position to 0, 0 by scrolling all the way back to the top");
@@ -84,7 +86,8 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
                 }
                 lastScrollPos = curScrollPos;
             }
-            return new Location(0,0 );
+            // FIXME: 12/12/2018 remove this
+//            return new Location(0,0 );
         }
     }
 

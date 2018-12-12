@@ -30,15 +30,15 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         FindsByName, FindsByTagName, FindsByXPath, JavascriptExecutor,
         SearchContext, TakesScreenshot, WebDriver, HasTouchScreen {
 
-    private final Logger logger;
-    private final Eyes eyes;
-    private final RemoteWebDriver driver;
-    private final TouchScreen touch;
-    private final Map<String, WebElement> elementsIds;
+    protected final Logger logger;
+    protected final RemoteWebDriver driver;
+    protected final Eyes eyes;
+    protected RectangleSize defaultContentViewportSize;
+    protected final TouchScreen touch;
+    protected final Map<String, WebElement> elementsIds;
     private final FrameChain frameChain;
 
-    private ImageRotation rotation;
-    private RectangleSize defaultContentViewportSize;
+    protected ImageRotation rotation;
 
     /**
      * Rotates the image as necessary. The rotation is either manually forced

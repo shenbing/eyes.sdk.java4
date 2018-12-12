@@ -30,7 +30,6 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     private static final String NATIVE_APP = "NATIVE_APP";
     private EyesAppiumDriver driver;
-    protected AppiumScrollPositionProvider positionProvider; // hiding EyesBase.positionProvider, because Appium _only_ has a scroll position provider
 
     public Eyes() {
         init();
@@ -77,22 +76,12 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         }
     }
 
-    @Override
-    public AppiumScrollPositionProvider getPositionProvider() {
-        return positionProvider;
-    }
-
-    @Override
-    public void setPositionProvider(PositionProvider positionProvider) {
-        logger.verbose("Setting Appium position provider");
-        this.positionProvider = (AppiumScrollPositionProvider) positionProvider;
-    }
 
     @Override
     protected ScaleProviderFactory getScaleProviderFactory() {
         // in the context of appium, we know the pixel ratio by getting it directly from the appium
         // server, so there's no need to figure anything out on the fly. just return a Fixed one
-        return new FixedScaleProviderFactory(1 / devicePixelRatio, scaleProviderHandler);
+        return new FixedScaleProviderFactory(1 / getDevicePixelRatio(), scaleProviderHandler);
     }
 
     /**
@@ -149,17 +138,6 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         return getEyesDriver().getDevicePixelRatio();
     }
 
-    @Override
-    protected ScrollingPositionProvider getScrollPositionProvider() {
-        // ensure we reuse the scroll position provider because it can have expensive state
-        if (positionProvider == null) {
-            AppiumScrollPositionProviderFactory scrollFactory = new AppiumScrollPositionProviderFactory(logger, getEyesDriver());
-            setPositionProvider(scrollFactory.getScrollPositionProvider());
-        }
-        return positionProvider;
-    }
-
-    @Override
     protected EyesWebDriverScreenshot getFullPageScreenshot() {
 
         logger.verbose("Full page Appium screenshot requested.");
@@ -167,13 +145,13 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
-        AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getScrollPositionProvider();
+        AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getPositionProvider();
 
         AppiumCaptureAlgorithmFactory algoFactory = new AppiumCaptureAlgorithmFactory(getEyesDriver(), logger,
             scrollPositionProvider, imageProvider, debugScreenshotsProvider, scaleProviderFactory,
             cutProviderHandler.get(), screenshotFactory, getWaitBeforeScreenshots());
 
-        FullPageCaptureAlgorithm algo = algoFactory.getAlgorithm();
+        AppiumFullPageCaptureAlgorithm algo = algoFactory.getAlgorithm();
 
         Location originalScrollViewPosition = scrollPositionProvider.getScrollableViewLocation();
         BufferedImage fullPageImage = algo
@@ -184,8 +162,8 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 //        BufferedImage fullPageImage = algo
 //            .getStitchedRegion(scrollableViewRegion, getStitchOverlap(), regionPositionCompensation);
 
-        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null,
-            originalScrollViewPosition, scrollPositionProvider);
+        return new EyesWebDriverScreenshot(logger, getEyesDriver(), fullPageImage, null,
+            originalScrollViewPosition);
     }
 
     protected EyesWebDriverScreenshot getSimpleScreenshot() {

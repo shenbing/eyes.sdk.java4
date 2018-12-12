@@ -5,10 +5,13 @@ import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
+import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.utils.ArgumentGuard;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
 
-public class ScrollPositionProvider implements PositionProvider {
+public class ScrollPositionProvider implements SeleniumScrollingPositionProvider {
 
 
     protected final Logger logger;
@@ -47,6 +50,25 @@ public class ScrollPositionProvider implements PositionProvider {
         logger.verbose("ScrollPositionProvider - Scrolling to " + location);
         EyesSeleniumUtils.setCurrentScrollPosition(executor, location);
         logger.verbose("ScrollPositionProvider - Done scrolling!");
+    }
+
+    @Override
+    public void setPosition(WebElement element) {
+        Point loc = element.getLocation();
+        setPosition(new Location(loc.x, loc.y));
+    }
+
+    @Override
+    public void setPosition(Frame frame) {
+        setPosition(frame.getReference());
+    }
+
+    @Override
+    public void scrollToBottomRight() {
+        logger.verbose("setting position of to bottom-right");
+        // TODO: 12/12/2018 Optimize to a single JS call
+        RectangleSize entireSize = getEntireSize();
+        setPosition(new Location(entireSize.getWidth(),entireSize.getHeight()));
     }
 
     /**

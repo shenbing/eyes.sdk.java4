@@ -19,7 +19,7 @@ import java.util.Map;
 public class EyesRemoteWebElement extends RemoteWebElement {
     private final Logger logger;
     private final EyesWebDriver eyesDriver;
-    private final RemoteWebElement webElement;
+    protected final RemoteWebElement webElement;
     private Method executeMethod;
 
     private final String JS_GET_COMPUTED_STYLE_FORMATTED_STR =

@@ -152,40 +152,6 @@ public class EyesSeleniumUtils {
      */
     public static boolean isLandscapeOrientation(Logger logger, WebDriver driver) {
         // We can only find orientation for mobile devices.
-        if (isMobileDevice(driver)) {
-            AppiumDriver<?> appiumDriver = (AppiumDriver<?>) getUnderlyingDriver(driver);
-
-            String originalContext = null;
-            try {
-                // We must be in native context in order to ask for orientation,
-                // because of an Appium bug.
-                originalContext = appiumDriver.getContext();
-                if (appiumDriver.getContextHandles().size() > 1 &&
-                        !originalContext.equalsIgnoreCase(NATIVE_APP)) {
-                    appiumDriver.context(NATIVE_APP);
-                } else {
-                    originalContext = null;
-                }
-            } catch (WebDriverException e) {
-                originalContext = null;
-            }
-            try {
-            } catch (WebDriverException e) {
-                originalContext = null;
-            }
-            try {
-                ScreenOrientation orientation = appiumDriver.getOrientation();
-                return orientation == ScreenOrientation.LANDSCAPE;
-            } catch (Exception e) {
-                logger.log("WARNING: Couldn't get device orientation. Assuming Portrait.");
-                return false;
-            } finally {
-                if (originalContext != null) {
-                    appiumDriver.context(originalContext);
-                }
-            }
-        }
-
         return false;
     }
 
