@@ -427,6 +427,7 @@ public class Region {
         width = intersectionWidth;
         height = intersectionHeight;
 
+        logger.verbose(String.format("resulting region: (%s)...", this));
     }
 
 
