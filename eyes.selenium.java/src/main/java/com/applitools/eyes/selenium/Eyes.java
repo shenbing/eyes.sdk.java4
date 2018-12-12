@@ -353,6 +353,8 @@ public class Eyes extends EyesBase {
 
         initDriver(driver);
 
+        tryUpdateDevicePixelRatio();
+
         screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
 
         ensureViewportSize();
@@ -1686,7 +1688,7 @@ public class Eyes extends EyesBase {
     }
 
     protected void tryUpdateDevicePixelRatio() {
-        logger.verbose("Trying to extract device pixel ratio...");
+        logger.verbose("Trying to update device pixel ratio...");
         try {
             devicePixelRatio = extractDevicePixelRatio();
         } catch (Exception e) {
@@ -1702,11 +1704,9 @@ public class Eyes extends EyesBase {
      */
     protected ScaleProviderFactory updateScalingParams() {
         // Update the scaling params only if we haven't done so yet, and the user hasn't set anything else manually.
-        if (devicePixelRatio == UNKNOWN_DEVICE_PIXEL_RATIO &&
-                scaleProviderHandler.get() instanceof NullScaleProvider) {
+        if (scaleProviderHandler.get() instanceof NullScaleProvider) {
             ScaleProviderFactory factory;
 
-            tryUpdateDevicePixelRatio();
 
             logger.verbose("Setting scale provider...");
             try {
