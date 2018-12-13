@@ -344,12 +344,15 @@ public class Eyes extends EyesBase {
         imageProvider = ImageProviderFactory.getImageProvider(getUserAgent(), this, logger, getEyesDriver());
     }
 
+    protected void initDriverBasedPositionProviders() { }
 
     protected WebDriver open(WebDriver driver) {
         if (getIsDisabled()) {
             logger.verbose("Ignored");
             return driver;
         }
+
+        ArgumentGuard.notNull(driver, "driver");
 
         initDriver(driver);
 
@@ -367,9 +370,8 @@ public class Eyes extends EyesBase {
         regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(getUserAgent(),
                 this, logger);
 
-        ArgumentGuard.notNull(driver, "driver");
+        initDriverBasedPositionProviders();
 
-        devicePixelRatio = UNKNOWN_DEVICE_PIXEL_RATIO;
         setJsExecutor(new SeleniumJavaScriptExecutor(getEyesDriver()));
 
         getEyesDriver().setRotation(getRotation());
@@ -771,7 +773,7 @@ public class Eyes extends EyesBase {
         List<EyesScreenshot> subScreenshots = new ArrayList<>();
         for (Region r : getRegion.getRegions(this, screenshot, true)) {
             logger.verbose("original sub-region: " + r);
-            r = regionPositionCompensation.compensateRegionPosition(r, devicePixelRatio);
+            r = regionPositionCompensation.compensateRegionPosition(r, getDevicePixelRatio());
             logger.verbose("sub-region after compensation: " + r);
             EyesScreenshot subScreenshot = screenshot.getSubScreenshotForRegion(r, false);
             subScreenshots.add(subScreenshot);
@@ -1715,7 +1717,7 @@ public class Eyes extends EyesBase {
                 // This can happen in Appium for example.
                 logger.verbose("Failed to set ContextBasedScaleProvider.");
                 logger.verbose("Using FixedScaleProvider instead...");
-                factory = new FixedScaleProviderFactory(1 / devicePixelRatio, scaleProviderHandler);
+                factory = new FixedScaleProviderFactory(1 / getDevicePixelRatio(), scaleProviderHandler);
             }
             logger.verbose("Done!");
             return factory;
@@ -1729,7 +1731,7 @@ public class Eyes extends EyesBase {
         WebElement element = getEyesDriver().findElement(By.tagName("html"));
         RectangleSize entireSize = EyesSeleniumUtils.getEntireElementSize(getJsExecutor(), element);
         return new ContextBasedScaleProviderFactory(logger, entireSize,
-                viewportSizeHandler.get(), devicePixelRatio, false,
+                viewportSizeHandler.get(), getDevicePixelRatio(), false,
                 scaleProviderHandler);
     }
 
@@ -2345,7 +2347,7 @@ public class Eyes extends EyesBase {
         ISeleniumCheckTarget seleniumCheckTarget = (checkSettingsInternal instanceof ISeleniumCheckTarget) ? (ISeleniumCheckTarget) checkSettingsInternal : null;
 
         logger.verbose("original region: " + region);
-        region = regionPositionCompensation.compensateRegionPosition(region, devicePixelRatio);
+        region = regionPositionCompensation.compensateRegionPosition(region, getDevicePixelRatio());
         logger.verbose("compensated region: " + region);
 
         if (seleniumCheckTarget == null) {
@@ -2362,10 +2364,9 @@ public class Eyes extends EyesBase {
         return ((EyesWebDriverScreenshot) screenshot).getSubScreenshotForRegion(region, false);
     }
 
-    @Override
-    protected EyesScreenshot getScreenshot() {
 
-        logger.verbose("getScreenshot()");
+    protected EyesScreenshot getFrameOrElementScreenshot() {
+        logger.verbose("Check frame/element requested");
 
         FrameChain originalFrameChain = getEyesDriver().getFrameChain().clone();
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
@@ -2384,62 +2385,20 @@ public class Eyes extends EyesBase {
             }
         }
 
-        if (checkFrameOrElement) {
-            logger.verbose("Check frame/element requested");
+        switchTo.frames(originalFrameChain);
 
-            switchTo.frames(originalFrameChain);
-
-            BufferedImage entireFrameOrElement;
-            if (elementPositionProvider == null) {
-                WebElement scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
-                PositionProvider positionProvider = this.getElementPositionProvider(scrollRootElement);
-                entireFrameOrElement = algo.getStitchedRegion(regionToCheck, null, positionProvider);
-            } else {
-                entireFrameOrElement = algo.getStitchedRegion(regionToCheck, null, elementPositionProvider);
-            }
-
-            logger.verbose("Building screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), entireFrameOrElement,
-                    new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
-        } else if (getConfig().getForceFullPageScreenshot() || stitchContent) {
-            logger.verbose("Full page screenshot requested.");
-
-            // Save the current frame path.
-            Location originalFramePosition =
-                    originalFrameChain.size() > 0
-                            ? originalFrameChain.getDefaultContentScrollPosition()
-                            : Location.ZERO;
-
-            switchTo.defaultContent();
-
-            BufferedImage fullPageImage = algo.getStitchedRegion(Region.EMPTY, null, positionProviderHandler.get());
-
-            switchTo.frames(originalFrameChain);
-            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), fullPageImage, null, originalFramePosition);
+        BufferedImage entireFrameOrElement;
+        if (elementPositionProvider == null) {
+            WebElement scrollRootElement = getEyesDriver().findElement(By.tagName("html"));
+            PositionProvider positionProvider = this.getElementPositionProvider(scrollRootElement);
+            entireFrameOrElement = algo.getStitchedRegion(regionToCheck, null, positionProvider);
         } else {
-            ensureElementVisible(this.targetElement);
-
-            logger.verbose("Screenshot requested...");
-            BufferedImage screenshotImage = imageProvider.getImage();
-            debugScreenshotsProvider.save(screenshotImage, "original");
-
-            ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-            if (scaleProvider.getScaleRatio() != 1.0) {
-                logger.verbose("scaling...");
-                screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
-                debugScreenshotsProvider.save(screenshotImage, "scaled");
-            }
-
-            CutProvider cutProvider = cutProviderHandler.get();
-            if (!(cutProvider instanceof NullCutProvider)) {
-                logger.verbose("cutting...");
-                screenshotImage = cutProvider.cut(screenshotImage);
-                debugScreenshotsProvider.save(screenshotImage, "cut");
-            }
-
-            logger.verbose("Creating screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
+            entireFrameOrElement = algo.getStitchedRegion(regionToCheck, null, elementPositionProvider);
         }
+
+        logger.verbose("Building screenshot object...");
+        result = new EyesWebDriverScreenshot(logger, getEyesDriver(), entireFrameOrElement,
+                new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
 
         if (getHideCaret() && activeElement != null) {
             try {
@@ -2449,9 +2408,125 @@ public class Eyes extends EyesBase {
             }
         }
 
+        logger.verbose("Done");
+        return result;
+    }
+
+    protected EyesScreenshot getFullPageScreenshot() {
+        FrameChain originalFrameChain = getEyesDriver().getFrameChain().clone();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
+
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
+        FullPageCaptureAlgorithm algo = createFullPageCaptureAlgorithm(scaleProviderFactory);
+
+        EyesWebDriverScreenshot result;
+
+        Object activeElement = null;
+        if (getHideCaret()) {
+            try {
+                activeElement = getEyesDriver().executeScript("var activeElement = document.activeElement; activeElement && activeElement.blur(); return activeElement;");
+            } catch (WebDriverException e) {
+                logger.verbose("WARNING: Cannot hide caret! " + e.getMessage());
+            }
+        }
+
+        logger.verbose("Full page screenshot requested.");
+
+        // Save the current frame path.
+        Location originalFramePosition =
+                originalFrameChain.size() > 0
+                        ? originalFrameChain.getDefaultContentScrollPosition()
+                        : Location.ZERO;
+
+        switchTo.defaultContent();
+
+        BufferedImage fullPageImage = algo.getStitchedRegion(Region.EMPTY, null, positionProviderHandler.get());
+
+        switchTo.frames(originalFrameChain);
+        result = new EyesWebDriverScreenshot(logger, getEyesDriver(), fullPageImage, null, originalFramePosition);
+
+        if (getHideCaret() && activeElement != null) {
+            try {
+                getEyesDriver().executeScript("arguments[0].focus();", activeElement);
+            } catch (WebDriverException e) {
+                logger.verbose("WARNING: Could not return focus to active element! " + e.getMessage());
+            }
+        }
+
+        logger.verbose("Done");
+        return result;
+    }
+
+    protected EyesScreenshot getSimpleScreenshot() {
+
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
+
+        EyesWebDriverScreenshot result;
+
+        Object activeElement = null;
+        if (getHideCaret()) {
+            try {
+                activeElement = getEyesDriver().executeScript("var activeElement = document.activeElement; activeElement && activeElement.blur(); return activeElement;");
+            } catch (WebDriverException e) {
+                logger.verbose("WARNING: Cannot hide caret! " + e.getMessage());
+            }
+        }
+
+        ensureElementVisible(this.targetElement);
+
+        logger.verbose("Screenshot requested...");
+        BufferedImage screenshotImage = imageProvider.getImage();
+        debugScreenshotsProvider.save(screenshotImage, "original");
+
+        ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+        if (scaleProvider.getScaleRatio() != 1.0) {
+            logger.verbose("scaling...");
+            screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
+            debugScreenshotsProvider.save(screenshotImage, "scaled");
+        }
+
+        CutProvider cutProvider = cutProviderHandler.get();
+        if (!(cutProvider instanceof NullCutProvider)) {
+            logger.verbose("cutting...");
+            screenshotImage = cutProvider.cut(screenshotImage);
+            debugScreenshotsProvider.save(screenshotImage, "cut");
+        }
+
+        logger.verbose("Creating screenshot object...");
+        result = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
+
+        if (getHideCaret() && activeElement != null) {
+            try {
+                getEyesDriver().executeScript("arguments[0].focus();", activeElement);
+            } catch (WebDriverException e) {
+                logger.verbose("WARNING: Could not return focus to active element! " + e.getMessage());
+            }
+        }
+
+        logger.verbose("Done");
+        return result;
+    }
+
+    @Override
+    protected EyesScreenshot getScreenshot() {
+
+        logger.verbose("getScreenshot()");
+
+        EyesScreenshot result;
+
+        if (checkFrameOrElement) {
+            result = getFrameOrElementScreenshot();
+        } else if (getConfig().getForceFullPageScreenshot() || stitchContent) {
+            result = getFullPageScreenshot();
+        } else {
+            result = getSimpleScreenshot();
+        }
+
         logger.verbose("Done!");
         return result;
     }
+
+
 
     private FullPageCaptureAlgorithm createFullPageCaptureAlgorithm(ScaleProviderFactory scaleProviderFactory) {
         return new FullPageCaptureAlgorithm(logger, regionPositionCompensation,

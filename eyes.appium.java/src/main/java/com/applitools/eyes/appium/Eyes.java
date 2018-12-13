@@ -47,8 +47,8 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     @Override
-    protected void initPositionProvider(boolean hardReset) {
-        logger.verbose("Initializing position providers.");
+    protected void initDriverBasedPositionProviders() {
+        logger.verbose("Initializing Appium position provider");
         setPositionProvider(new AppiumScrollPositionProviderFactory(logger, getEyesDriver()).getScrollPositionProvider());
     }
 
