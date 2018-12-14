@@ -60,26 +60,12 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         ArgumentGuard.notNull(image, "image");
         BufferedImage normalizedImage = image;
         if (rotation != null) {
+            logger.verbose("Required rotation: " + rotation.getRotation());
             if (rotation.getRotation() != 0) {
                 normalizedImage = ImageUtils.rotateImage(image,
                         rotation.getRotation());
             }
-        } else { // Do automatic rotation if necessary
-            try {
-                logger.verbose("Trying to automatically normalize rotation...");
-                if (EyesSeleniumUtils.isMobileDevice(driver) &&
-                        EyesSeleniumUtils.isLandscapeOrientation(logger, driver)
-                        && image.getHeight() > image.getWidth()) {
-                    // For Android, we need to rotate images to the right, and
-                    // for iOS to the left.
-                    int degrees =
-                            EyesSeleniumUtils.isAndroid(driver) ? 90 : -90;
-                    normalizedImage = ImageUtils.rotateImage(image, degrees);
-                }
-            } catch (Exception e) {
-                logger.verbose("Got exception: " + e.getMessage());
-                logger.verbose("Skipped automatic rotation handling.");
-            }
+            logger.verbose("Done");
         }
 
         return normalizedImage;

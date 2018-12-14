@@ -7,7 +7,7 @@ import com.applitools.eyes.triggers.MouseAction;
 import com.applitools.utils.ArgumentGuard;
 import com.google.common.collect.ImmutableMap;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Coordinates;
+import org.openqa.selenium.interactions.internal.Coordinates;
 import org.openqa.selenium.remote.*;
 
 import java.lang.reflect.Method;

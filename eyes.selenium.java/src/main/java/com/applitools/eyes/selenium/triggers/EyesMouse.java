@@ -8,7 +8,7 @@ import com.applitools.eyes.triggers.MouseAction;
 import com.applitools.eyes.Region;
 import com.applitools.utils.ArgumentGuard;
 import org.openqa.selenium.interactions.Mouse;
-import org.openqa.selenium.interactions.Coordinates;
+import org.openqa.selenium.interactions.internal.Coordinates;
 
 /**
  * A wrapper class for Selenium's Mouse class. It adds saving of mouse events

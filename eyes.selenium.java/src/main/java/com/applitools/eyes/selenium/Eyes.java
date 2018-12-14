@@ -395,7 +395,7 @@ public class Eyes extends EyesBase {
             logger.log(errMsg);
             throw new EyesException(errMsg);
         }
-        if (EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (isMobileDevice(driver)) {
             regionVisibilityStrategyHandler.set(new NopRegionVisibilityStrategy(logger));
         }
     }
@@ -909,7 +909,7 @@ public class Eyes extends EyesBase {
 
         ValidationInfo validationInfo = this.fireValidationWillStartEvent(name);
 
-        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (!isMobileDevice(getEyesDriver())) {
             logger.verbose("URL: " + getEyesDriver().getCurrentUrl());
         }
 
@@ -958,14 +958,14 @@ public class Eyes extends EyesBase {
                 }
             } else {
                 logger.verbose("default case");
-                if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+                if (!isMobileDevice(getEyesDriver())) {
                     // required to prevent cut line on the last stitched part of the page on some browsers (like firefox).
                     switchTo.defaultContent();
                     originalFC = tryHideScrollbars();
                     currentFramePositionProvider = createPositionProvider(getEyesDriver().findElement(By.tagName("html")));
                 }
                 result = this.checkWindowBase(NullRegionProvider.INSTANCE, name, false, checkSettings);
-                if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+                if (!isMobileDevice(getEyesDriver())) {
                     switchTo.frames(this.originalFC);
                 }
             }
@@ -985,7 +985,7 @@ public class Eyes extends EyesBase {
             this.positionMemento = null;
         }
 
-        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (!isMobileDevice(getEyesDriver())) {
             switchTo.resetScroll();
 
             if (originalFC != null) {
@@ -1149,7 +1149,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver().getRemoteWebDriver())) {
+        if (isMobileDevice(getEyesDriver().getRemoteWebDriver())) {
             logger.log("NATIVE context identified, skipping 'ensure element visible'");
             return;
         }
@@ -2234,7 +2234,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (!isMobileDevice(getEyesDriver())) {
             FrameChain originalFrame = getEyesDriver().getFrameChain();
             getEyesDriver().switchTo().defaultContent();
 
@@ -2270,7 +2270,7 @@ public class Eyes extends EyesBase {
     }
 
     private void trySwitchToFrames(WebDriver driver, EyesTargetLocator switchTo, FrameChain frames) {
-        if (EyesSeleniumUtils.isMobileDevice(driver)) {
+        if (isMobileDevice(driver)) {
             return;
         }
         try {
@@ -2281,7 +2281,7 @@ public class Eyes extends EyesBase {
     }
 
     private FrameChain tryHideScrollbars() {
-        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (isMobileDevice(getEyesDriver())) {
             return new FrameChain(logger);
         }
         if (getConfig().getHideScrollbars() || (getConfig().getStitchMode() == StitchMode.CSS && stitchContent)) {
@@ -2316,7 +2316,7 @@ public class Eyes extends EyesBase {
     }
 
     private void tryRestoreScrollbars(FrameChain frameChain) {
-        if (EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (isMobileDevice(getEyesDriver())) {
             return;
         }
         if (getConfig().getHideScrollbars() || (getConfig().getStitchMode() == StitchMode.CSS && stitchContent)) {
@@ -2562,58 +2562,13 @@ public class Eyes extends EyesBase {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This override also checks for mobile operating system.
-     */
-    @Override
-    protected AppEnvironment getAppEnvironment() {
-
-        AppEnvironment appEnv = super.getAppEnvironment();
-        RemoteWebDriver underlyingDriver = getEyesDriver().getRemoteWebDriver();
-        // If hostOs isn't set, we'll try and extract and OS ourselves.
-        if (appEnv.getOs() == null) {
-            logger.log("No OS set, checking for mobile OS...");
-            if (EyesSeleniumUtils.isMobileDevice(underlyingDriver)) {
-                String platformName = null;
-                logger.log("Mobile device detected! Checking device type..");
-                if (EyesSeleniumUtils.isAndroid(underlyingDriver)) {
-                    logger.log("Android detected.");
-                    platformName = "Android";
-                } else if (EyesSeleniumUtils.isIOS(underlyingDriver)) {
-                    logger.log("iOS detected.");
-                    platformName = "iOS";
-                } else {
-                    logger.log("Unknown device type.");
-                }
-                // We only set the OS if we identified the device type.
-                if (platformName != null) {
-                    String os = platformName;
-                    String platformVersion =
-                            EyesSeleniumUtils.getPlatformVersion(underlyingDriver);
-                    if (platformVersion != null) {
-                        String majorVersion =
-                                platformVersion.split("\\.", 2)[0];
-
-                        if (!majorVersion.isEmpty()) {
-                            os += " " + majorVersion;
-                        }
-                    }
-
-                    logger.verbose("Setting OS: " + os);
-                    appEnv.setOs(os);
-                }
-            } else {
-                logger.log("No mobile OS detected.");
-            }
-        }
-        logger.log("Done!");
-        return appEnv;
+    protected boolean isMobileDevice(WebDriver driver) {
+        return false;
     }
 
+
     private WebElement getScrollRootElement(IScrollRootElementContainer scrollRootElementContainer) {
-        if (!EyesSeleniumUtils.isMobileDevice(getEyesDriver())) {
+        if (!isMobileDevice(getEyesDriver())) {
             if (scrollRootElementContainer == null) {
                 return getEyesDriver().findElement(By.tagName("html"));
             }
@@ -2719,6 +2674,6 @@ public class Eyes extends EyesBase {
 
     @Override
     public boolean isSendDom() {
-        return !EyesSeleniumUtils.isMobileDevice(getEyesDriver()) && super.isSendDom();
+        return !isMobileDevice(getEyesDriver()) && super.isSendDom();
     }
 }

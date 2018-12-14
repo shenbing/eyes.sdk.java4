@@ -85,6 +85,17 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     /**
+     * @param driver The driver for which to check if it represents a mobile
+     *               device.
+     * @return {@code true} if the platform running the test is a mobile
+     * platform. {@code false} otherwise.
+     */
+    @Override
+    protected boolean isMobileDevice(WebDriver driver) {
+        return EyesAppiumUtils.isMobileDevice(driver);
+    }
+
+    /**
      * {@inheritDoc}
      * <p>
      * This override also checks for mobile operating system.

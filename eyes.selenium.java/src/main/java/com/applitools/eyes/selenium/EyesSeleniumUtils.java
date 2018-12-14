@@ -5,16 +5,11 @@ package com.applitools.eyes.selenium;
 
 import com.applitools.eyes.*;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
-import com.applitools.eyes.selenium.wrappers.EyesRemoteWebElement;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.GeneralUtils;
-import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.ios.IOSDriver;
-import io.appium.java_client.remote.MobileCapabilityType;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Coordinates;
+import org.openqa.selenium.interactions.internal.Coordinates;
 
 import java.util.HashMap;
 import java.util.List;
@@ -132,17 +127,6 @@ public class EyesSeleniumUtils {
         }
 
         return driver;
-    }
-
-    /**
-     * @param driver The driver for which to check if it represents a mobile
-     *               device.
-     * @return {@code true} if the platform running the test is a mobile
-     * platform. {@code false} otherwise.
-     */
-    public static boolean isMobileDevice(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof AppiumDriver;
     }
 
     /**
@@ -460,40 +444,6 @@ public class EyesSeleniumUtils {
         }
 
         throw new EyesException("Failed to set viewport size!");
-    }
-
-    /**
-     * @param driver The driver to test.
-     * @return {@code true} if the driver is an Android driver.
-     * {@code false} otherwise.
-     */
-    public static boolean isAndroid(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof AndroidDriver;
-    }
-
-    /**
-     * @param driver The driver to test.
-     * @return {@code true} if the driver is an iOS driver.
-     * {@code false} otherwise.
-     */
-    public static boolean isIOS(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof IOSDriver;
-    }
-
-    /**
-     * @param driver The driver to get the platform version from.
-     * @return The platform version or {@code null} if it is undefined.
-     */
-    public static String getPlatformVersion(HasCapabilities driver) {
-        Capabilities capabilities = driver.getCapabilities();
-        Object platformVersionObj =
-                capabilities.getCapability
-                        (MobileCapabilityType.PLATFORM_VERSION);
-
-        return platformVersionObj == null ?
-                null : String.valueOf(platformVersionObj);
     }
 
     /**

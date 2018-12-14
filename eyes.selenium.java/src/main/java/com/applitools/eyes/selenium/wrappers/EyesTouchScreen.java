@@ -10,7 +10,7 @@ import com.applitools.eyes.triggers.MouseAction;
 import com.applitools.eyes.Region;
 import com.applitools.utils.ArgumentGuard;
 import org.openqa.selenium.interactions.TouchScreen;
-import org.openqa.selenium.interactions.Coordinates;
+import org.openqa.selenium.interactions.internal.Coordinates;
 
 
 /**
