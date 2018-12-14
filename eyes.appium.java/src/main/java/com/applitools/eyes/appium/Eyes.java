@@ -36,6 +36,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         doNotGetTitle = true;
     }
 
+    @Override
+    public String getBaseAgentId() {
+        return "eyes.appium.java/4.0.0";
+    }
+
     private void init() {
         // FIXME: 19/06/2018 Not relevant anymore (both the JS handler and treating EyesSeleniumUtils as static)
 //        EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));

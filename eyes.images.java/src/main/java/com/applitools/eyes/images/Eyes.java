@@ -29,7 +29,7 @@ public class Eyes extends EyesBase {
      */
     @Override
     public String getBaseAgentId() {
-        return "eyes.images.java/3.141.3";
+        return "eyes.images.java/4.0.0";
     }
 
     @Override
