@@ -164,7 +164,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             }
 
             logger.verbose("Since we're scrolling up, just say we reached 0, 0");
-            return new Location(curScrollPos.getX(), 0);
+            return new Location(curScrollPos == null ? 0 : curScrollPos.getX(), 0);
         }
 
         // if we got scrolldata from a ScrollView (not List or Grid), actively set the scroll

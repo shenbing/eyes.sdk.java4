@@ -99,7 +99,7 @@ public class Eyes extends EyesBase {
     private UserAgent userAgent;
     protected ImageProvider imageProvider;
     protected RegionPositionCompensation regionPositionCompensation;
-    private WebElement targetElement = null;
+    protected WebElement targetElement = null;
     private PositionMemento positionMemento;
     private Region effectiveViewport = Region.EMPTY;
 
@@ -1208,7 +1208,7 @@ public class Eyes extends EyesBase {
         return viewportBounds;
     }
 
-    private MatchResult checkRegion(String name, ICheckSettings checkSettings) {
+    protected MatchResult checkRegion(String name, ICheckSettings checkSettings) {
 //        // If needed, scroll to the top/left of the element (additional help
 //        // to make sure it's visible).
 //        Point locationAsPoint = targetElement.getLocation();
