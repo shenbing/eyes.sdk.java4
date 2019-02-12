@@ -42,10 +42,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         return scrollableViewLoc;
     }
 
-    @Override
-    public Location getCurrentPosition(boolean absolute) {
-        logger.verbose("AndroidScrollPositionProvider - getCurrentPosition()");
-        Location loc = getScrollableViewLocation();
+    private void checkCurrentScrollPosition() {
         if (curScrollPos == null) {
             logger.verbose("There was no current scroll position registered, so setting it for the first time");
             ContentSize contentSize = getCachedContentSize();
@@ -53,11 +50,33 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             logger.verbose("Last scroll data from the server was: " + scrollData);
             curScrollPos = getScrollPosFromScrollData(contentSize, scrollData, 0, false);
         }
+    }
+
+    @Override
+    public Location getCurrentPosition(boolean absolute) {
+        logger.verbose("AndroidScrollPositionProvider - getCurrentPosition()");
+        Location loc = getScrollableViewLocation();
+        checkCurrentScrollPosition();
         Location pos;
         if (absolute) {
             pos = new Location(loc.getX() + curScrollPos.getX(), loc.getY() + curScrollPos.getY());
         } else {
             pos = new Location(curScrollPos.getX(), curScrollPos.getY());
+        }
+        logger.verbose("The current scroll position is " + pos);
+        return pos;
+    }
+
+    @Override
+    public Location getCurrentPositionWithoutStatusBar(boolean absolute) {
+        logger.verbose("AndroidScrollPositionProvider - getCurrentPositionWithoutStatusBar()");
+        Location loc = getScrollableViewLocation();
+        checkCurrentScrollPosition();
+        Location pos;
+        if (absolute) {
+            pos = new Location(loc.getX() + curScrollPos.getX(), loc.getY() - getStatusBarHeight() + curScrollPos.getY());
+        } else {
+            pos = new Location(curScrollPos.getX(), curScrollPos.getY() - getStatusBarHeight());
         }
         logger.verbose("The current scroll position is " + pos);
         return pos;
@@ -144,7 +163,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
 
     public Location scrollDown(boolean returnAbsoluteLocation) {
         scroll(true);
-        return getCurrentPosition(returnAbsoluteLocation);
+        return getCurrentPositionWithoutStatusBar(returnAbsoluteLocation);
     }
 
     private Location getScrollPosFromScrollData(ContentSize contentSize, LastScrollData scrollData, int supposedScrollAmt, boolean isDown) {
