@@ -210,9 +210,9 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         MatchResult result = checkWindowBase(new RegionProvider() {
             @Override
             public Region getRegion() {
-                Point p = targetElement.getLocation(); // 100, 268
+                Point p = targetElement.getLocation();
                 p.y = p.y - driver.getStatusBarHeight();
-                Dimension d = targetElement.getSize(); // 175, 31
+                Dimension d = targetElement.getSize();
                 return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
             }
         }, name, false, checkSettings);
