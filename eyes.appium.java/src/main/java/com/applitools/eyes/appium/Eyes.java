@@ -207,13 +207,16 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     @Override
     protected MatchResult checkRegion(String name, ICheckSettings checkSettings) {
+        final double scaleRatio = this.getScaleRatio();
         MatchResult result = checkWindowBase(new RegionProvider() {
             @Override
             public Region getRegion() {
                 Point p = targetElement.getLocation();
                 p.y = p.y - driver.getStatusBarHeight();
+                Point ps = new Point((int) Math.round(p.x * scaleRatio), (int) Math.round(p.y * scaleRatio));
                 Dimension d = targetElement.getSize();
-                return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+                Dimension ds = new Dimension((int) Math.round(d.width * scaleRatio), (int) Math.round(d.height * scaleRatio));
+                return new Region(ps.getX(), ps.getY(), ds.getWidth(), ds.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
             }
         }, name, false, checkSettings);
         logger.verbose("Done! trying to scroll back to original position.");
