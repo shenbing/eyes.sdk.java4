@@ -8,6 +8,7 @@ import com.applitools.eyes.appium.capture.ImageProviderFactory;
 import com.applitools.eyes.capture.EyesScreenshotFactory;
 import com.applitools.eyes.fluent.ICheckSettings;
 import com.applitools.eyes.fluent.ICheckSettingsInternal;
+import com.applitools.eyes.positioning.RegionProvider;
 import com.applitools.eyes.scaling.FixedScaleProviderFactory;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshotFactory;
@@ -206,11 +207,14 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     @Override
     protected MatchResult checkRegion(String name, ICheckSettings checkSettings) {
-        MatchResult result = checkWindowBase(() -> {
-            Point p = targetElement.getLocation(); // 100, 268
-            p.y = p.y - driver.getStatusBarHeight();
-            Dimension d = targetElement.getSize(); // 175, 31
-            return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+        MatchResult result = checkWindowBase(new RegionProvider() {
+            @Override
+            public Region getRegion() {
+                Point p = targetElement.getLocation(); // 100, 268
+                p.y = p.y - driver.getStatusBarHeight();
+                Dimension d = targetElement.getSize(); // 175, 31
+                return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+            }
         }, name, false, checkSettings);
         logger.verbose("Done! trying to scroll back to original position.");
 
