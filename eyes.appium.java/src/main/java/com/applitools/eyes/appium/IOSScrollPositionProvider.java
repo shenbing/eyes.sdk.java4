@@ -111,7 +111,7 @@ public class IOSScrollPositionProvider extends AppiumScrollPositionProvider {
 
     public Location scrollDown(boolean returnAbsoluteLocation) {
         EyesAppiumUtils.scrollByDirection(driver, SCROLL_DIRECTION_DOWN, getScrollDistanceRatio());
-        return getCurrentPosition(returnAbsoluteLocation);
+        return getCurrentPositionWithoutStatusBar(returnAbsoluteLocation);
     }
 
 }

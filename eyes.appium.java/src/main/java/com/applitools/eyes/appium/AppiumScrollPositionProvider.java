@@ -144,6 +144,21 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         return pos;
     }
 
+    public Location getCurrentPositionWithoutStatusBar(boolean absolute) {
+        logger.verbose("AppiumScrollPositionProvider - getCurrentPositionWithoutStatusBar()");
+        Location loc = getScrollableViewLocation();
+        Location childLoc = getFirstVisibleChildLocation();
+        Location pos;
+        if (absolute) {
+            pos = new Location(loc.getX() * 2 - childLoc.getX(), loc.getY() * 2 - getStatusBarHeight() - childLoc.getY());
+        } else {
+            // the position of the scrollview is basically the offset of the first visible child
+            pos = new Location(loc.getX() - childLoc.getX(), (loc.getY() - getStatusBarHeight()) - childLoc.getY());
+        }
+        logger.verbose("The current scroll position is " + pos);
+        return pos;
+    }
+
     public Location getCurrentPosition() {
         return getCurrentPosition(false);
     }
@@ -162,7 +177,7 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
      * to.
      */
     public RectangleSize getEntireSize() {
-        int windowHeight = driver.manage().window().getSize().getHeight();
+        int windowHeight = driver.manage().window().getSize().getHeight() - getStatusBarHeight();
         logger.verbose("window height: " + windowHeight);
         ContentSize contentSize = getCachedContentSize();
         if (contentSize == null) {
@@ -191,4 +206,7 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
 
     public abstract Location scrollDown(boolean returnAbsoluteLocation);
 
+    int getStatusBarHeight() {
+        return eyesDriver.getStatusBarHeight();
+    }
 }

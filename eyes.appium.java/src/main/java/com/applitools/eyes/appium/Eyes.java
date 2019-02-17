@@ -6,23 +6,19 @@ package com.applitools.eyes.appium;
 import com.applitools.eyes.*;
 import com.applitools.eyes.appium.capture.ImageProviderFactory;
 import com.applitools.eyes.capture.EyesScreenshotFactory;
-import com.applitools.eyes.positioning.PositionProvider;
-import com.applitools.eyes.positioning.ScrollingPositionProvider;
+import com.applitools.eyes.fluent.ICheckSettings;
+import com.applitools.eyes.fluent.ICheckSettingsInternal;
 import com.applitools.eyes.scaling.FixedScaleProviderFactory;
-import com.applitools.eyes.selenium.EyesSeleniumUtils;
-import com.applitools.eyes.selenium.SeleniumJavaScriptExecutor;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshotFactory;
-import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
-import com.applitools.eyes.selenium.positioning.RegionPositionCompensationFactory;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.MobileBy;
 import java.awt.image.BufferedImage;
-import java.util.List;
+
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 
@@ -206,6 +202,43 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
         logger.verbose("Creating screenshot object...");
         return new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
+    }
+
+    @Override
+    protected MatchResult checkRegion(String name, ICheckSettings checkSettings) {
+        MatchResult result = checkWindowBase(() -> {
+            Point p = targetElement.getLocation(); // 100, 268
+            p.y = p.y - driver.getStatusBarHeight();
+            Dimension d = targetElement.getSize(); // 175, 31
+            return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+        }, name, false, checkSettings);
+        logger.verbose("Done! trying to scroll back to original position.");
+
+        return result;
+    }
+
+    @Override
+    protected EyesScreenshot getSubScreenshot(EyesScreenshot screenshot, Region region, ICheckSettingsInternal checkSettingsInternal) {
+        ArgumentGuard.notNull(region, "region");
+        if ((EyesAppiumUtils.isAndroid(driver) || EyesAppiumUtils.isIOS(driver))
+                && region.getCoordinatesType() != CoordinatesType.CONTEXT_RELATIVE) {
+            logger.verbose(String.format("getSubScreenshot([%s])", region));
+
+            BufferedImage image = screenshot.getImage();
+            if (image.getWidth() < driver.getViewportRect().get("width")) {
+                image = ImageUtils.scaleImage(image, driver.getEyes().getDevicePixelRatio());
+            }
+            BufferedImage subScreenshotImage = ImageUtils.scaleImage(ImageUtils.getImagePart(image, region),
+                    1/driver.getEyes().getDevicePixelRatio());
+
+            EyesWebDriverScreenshot result = new EyesWebDriverScreenshot(logger, driver, subScreenshotImage,
+                    new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
+
+            logger.verbose("Done!");
+            return result;
+        } else {
+            return screenshot.getSubScreenshot(region, false);
+        }
     }
 
     // TODO override implementation of getFrameOrElementScreenshot
