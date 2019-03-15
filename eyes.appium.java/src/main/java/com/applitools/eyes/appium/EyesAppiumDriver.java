@@ -64,7 +64,12 @@ public class EyesAppiumDriver extends EyesWebDriver {
     }
 
     public double getDevicePixelRatio () {
-        return ((Long) getCachedSessionDetails().get("pixelRatio")).doubleValue();
+        Object pixelRatio = getCachedSessionDetails().get("pixelRatio");
+        if (pixelRatio instanceof Double) {
+            return (Double) pixelRatio;
+        } else {
+            return ((Long) pixelRatio).doubleValue();
+        }
     }
 
     /**
