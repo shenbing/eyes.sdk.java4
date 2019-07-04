@@ -36,11 +36,9 @@ public class AndroidFullPageCaptureAlgorithm extends AppiumFullPageCaptureAlgori
         scrollViewRegion.setLocation(newLoc);
         scrollViewRegion.setSize(newSize);
 
-
-
         ContentSize contentSize = ((AppiumScrollPositionProvider) scrollProvider).getCachedContentSize();
 
-        int positionMargin = 50;
+        int positionMargin = 50; // We need to set position margin to avoid shadow at the top of view
 
         int xPos = entireSize.getWidth()/2;
         Region regionToCrop;
