@@ -2,16 +2,21 @@ package com.applitools.eyes.appium;
 
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
+import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
+import io.appium.java_client.MobileBy;
+import io.appium.java_client.MobileElement;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import java.time.Duration;
 
+import io.appium.java_client.android.AndroidElement;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebElement;
 
@@ -166,6 +171,21 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         return getCurrentPositionWithoutStatusBar(returnAbsoluteLocation);
     }
 
+    @Override
+    public void scrollTo(int startX, int startY, int endX, int endY) {
+        TouchAction scrollAction = new TouchAction(driver);
+        scrollAction.press(new PointOption().withCoordinates(startX, startY)).waitAction(new WaitOptions().withDuration(Duration.ofMillis(1500)));
+        scrollAction.moveTo(new PointOption().withCoordinates(endX, endY - contentSize.touchPadding));
+        scrollAction.cancel();
+        driver.performTouchAction(scrollAction);
+
+        curScrollPos = new Location(curScrollPos.getX(), curScrollPos.getY() + startX);
+
+        // because Android scrollbars are visible a bit after touch, we should wait for them to
+        // disappear before handing control back to the screenshotter
+        try { Thread.sleep(750); } catch (InterruptedException ign) {}
+    }
+
     private Location getScrollPosFromScrollData(ContentSize contentSize, LastScrollData scrollData, int supposedScrollAmt, boolean isDown) {
         logger.verbose("Getting scroll position from last scroll data (" + scrollData + ") and " +
             "contentSize (" + contentSize + ")");
@@ -223,4 +243,51 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         return new Location(curScrollPos == null ? 0 : curScrollPos.getX(), newYPos);
     }
 
+    @Override
+    public RectangleSize getEntireSize() {
+        int windowHeight = driver.manage().window().getSize().getHeight() - getStatusBarHeight();
+        logger.verbose("window height: " + windowHeight);
+
+        WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+        String className = activeScroll.getAttribute("className");
+
+        int scrollableHeight = 0;
+
+        ContentSize contentSize = getCachedContentSize();
+        if (contentSize == null) {
+            return eyesDriver.getDefaultContentViewportSize();
+        }
+
+        if (className.equals("android.support.v7.widget.RecyclerView") ||
+                className.equals("android.widget.ListView") ||
+                className.equals("android.widget.GridView")) {
+            try {
+                MobileElement hiddenElement = ((AndroidDriver<AndroidElement>) driver).findElement(MobileBy.AndroidUIAutomator("new UiSelector().descriptionContains(\"EyesAppiumHelper\")"));
+                if (hiddenElement != null) {
+                    hiddenElement.click();
+
+                    String scrollableContentSize = hiddenElement.getText();
+                    try {
+                        scrollableHeight = Integer.valueOf(scrollableContentSize);
+                        logger.verbose("Scrollable height received from EyesAppiumHelper = " + scrollableContentSize);
+                    } catch (NumberFormatException nfe) {
+                        logger.verbose("Could not parse scrollable content height");
+                    }
+                }
+            } catch (StaleElementReferenceException ignored) {
+                scrollableHeight = contentSize.scrollableOffset;
+                logger.verbose("Could not get EyesAppiumHelper element. Return scrollable offset from cached content size (" + scrollableHeight + ")");
+            }
+        }
+
+        this.contentSize.scrollableOffset = scrollableHeight == 0 ? contentSize.scrollableOffset : scrollableHeight - contentSize.height;
+        int scrollContentHeight = this.contentSize.getScrollContentHeight();
+        int outsideScrollviewHeight = windowHeight - contentSize.height;
+        RectangleSize result = new RectangleSize(contentSize.width,
+                scrollContentHeight + outsideScrollviewHeight + verticalScrollGap);
+        logger.verbose("AppiumScrollPositionProvider - Entire size: " + result + " (Accounting for " +
+                "a vertical scroll gap of " + verticalScrollGap + ", with a scroll content height of " +
+                scrollContentHeight + ")");
+        return result;
+    }
 }
