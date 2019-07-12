@@ -100,12 +100,20 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
     }
 
     public static ContentSize getContentSize(AppiumDriver driver, WebElement element) throws IOException {
-        String contentSizeJson = element.getAttribute("contentSize");
-        driver.getClass();
         ContentSize contentSize;
-        ObjectMapper objectMapper = new ObjectMapper();
-        contentSize = objectMapper.readValue(contentSizeJson, ContentSize.class);
-        contentSize.setDriver(driver);
+        try {
+            String contentSizeJson = element.getAttribute("contentSize");
+            ObjectMapper objectMapper = new ObjectMapper();
+            contentSize = objectMapper.readValue(contentSizeJson, ContentSize.class);
+            contentSize.setDriver(driver);
+        } catch (WebDriverException e) {
+            contentSize = new ContentSize();
+            contentSize.height = element.getSize().getHeight();
+            contentSize.width = element.getSize().getWidth();
+            contentSize.top = element.getLocation().getY();
+            contentSize.left = element.getLocation().getX();
+            contentSize.scrollableOffset = element.getSize().getHeight();
+        }
         return contentSize;
     }
 
