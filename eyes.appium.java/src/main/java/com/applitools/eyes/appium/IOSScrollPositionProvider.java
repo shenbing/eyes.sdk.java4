@@ -114,4 +114,9 @@ public class IOSScrollPositionProvider extends AppiumScrollPositionProvider {
         return getCurrentPositionWithoutStatusBar(returnAbsoluteLocation);
     }
 
+    @Override
+    public void scrollTo(int startX, int startY, int endX, int endY) {
+        // Do not need this method
+    }
+
 }

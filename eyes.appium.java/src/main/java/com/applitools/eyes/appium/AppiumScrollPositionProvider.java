@@ -9,14 +9,12 @@ import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
 import com.applitools.eyes.selenium.positioning.SeleniumScrollingPositionProvider;
 import com.applitools.utils.ArgumentGuard;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.appium.java_client.AppiumDriver;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
-import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 
 public abstract class AppiumScrollPositionProvider implements SeleniumScrollingPositionProvider {
@@ -205,6 +203,8 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
     }
 
     public abstract Location scrollDown(boolean returnAbsoluteLocation);
+
+    public abstract void scrollTo(int startX, int startY, int endX, int endY);
 
     int getStatusBarHeight() {
         return eyesDriver.getStatusBarHeight();

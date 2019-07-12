@@ -33,7 +33,7 @@ public class AppiumFullPageCaptureAlgorithm {
     private PositionMemento originalPosition;
     private ScaleProvider scaleProvider;
     private CutProvider cutProvider;
-    private Region regionInScreenshot;
+    protected Region regionInScreenshot;
     private double pixelRatio;
     private BufferedImage stitchedImage;
     protected Location currentPosition;
@@ -85,7 +85,7 @@ public class AppiumFullPageCaptureAlgorithm {
             waitBeforeScreenshots);
     }
 
-    private RectangleSize captureAndStitchCurrentPart(Region partRegion, Region scrollViewRegion) {
+    protected RectangleSize captureAndStitchCurrentPart(Region partRegion, Region scrollViewRegion) {
 
         logger.verbose("Taking screenshot for current scroll location");
         GeneralUtils.sleep(waitBeforeScreenshots);
