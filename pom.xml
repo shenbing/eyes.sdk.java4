@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.applitools</groupId>
     <artifactId>eyes-sdk-java4-parent</artifactId>
-    <version>4.0.2</version>
+    <version>4.0.3</version>
     <packaging>pom</packaging>
     <name>eyes-sdk-java4-parent</name>
     <url>http://www.applitools.com</url>
@@ -98,26 +98,26 @@
             </activation>
             <build>
                 <plugins>
-                    <!--<plugin>-->
-                        <!--<groupId>org.apache.maven.plugins</groupId>-->
-                        <!--<artifactId>maven-gpg-plugin</artifactId>-->
-                        <!--<version>1.6</version>-->
-                        <!--<executions>-->
-                            <!--<execution>-->
-                                <!--<id>sign-artifacts-on-verify</id>-->
-                                <!--<phase>verify</phase>-->
-                                <!--<goals>-->
-                                    <!--<goal>sign</goal>-->
-                                <!--</goals>-->
-                                <!--<configuration>-->
-                                    <!--<gpgArguments>-->
-                                        <!--<arg>&#45;&#45;pinentry-mode</arg>-->
-                                        <!--<arg>loopback</arg>-->
-                                    <!--</gpgArguments>-->
-                                <!--</configuration>-->
-                            <!--</execution>-->
-                        <!--</executions>-->
-                    <!--</plugin>-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts-on-verify</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
