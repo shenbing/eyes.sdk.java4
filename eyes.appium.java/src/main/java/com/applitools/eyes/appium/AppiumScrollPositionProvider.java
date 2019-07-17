@@ -12,10 +12,8 @@ import com.applitools.utils.ArgumentGuard;
 import io.appium.java_client.AppiumDriver;
 import java.io.IOException;
 import javax.annotation.Nullable;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.WebElement;
+
+import org.openqa.selenium.*;
 
 public abstract class AppiumScrollPositionProvider implements SeleniumScrollingPositionProvider {
 
@@ -47,7 +45,13 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         if (firstVisibleChild == null) {
             logger.verbose("Could not find first visible child in cache, getting (this could take a while)");
             firstVisibleChild = EyesAppiumUtils.getFirstVisibleChild(activeScroll);
-
+        } else {
+            Rectangle firstVisibleChildRect = firstVisibleChild.getRect();
+            if (firstVisibleChildRect.getWidth() == 0 && firstVisibleChildRect.getHeight() == 0) {
+                logger.verbose("Cached visible child is invalid for some reason(e.g. user opened another screen and current firstVisibleChild is useless" +
+                        " and it is not already in the view hierarchy). It should be updated. Getting (this could take a while)");
+                firstVisibleChild = EyesAppiumUtils.getFirstVisibleChild(activeScroll);
+            }
         }
         return firstVisibleChild;
     }
