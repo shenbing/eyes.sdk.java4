@@ -248,36 +248,40 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         int windowHeight = driver.manage().window().getSize().getHeight() - getStatusBarHeight();
         logger.verbose("window height: " + windowHeight);
 
-        WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-        String className = activeScroll.getAttribute("className");
-
-        int scrollableHeight = 0;
-
         ContentSize contentSize = getCachedContentSize();
         if (contentSize == null) {
             return eyesDriver.getDefaultContentViewportSize();
         }
 
-        if (className.equals("android.support.v7.widget.RecyclerView") ||
-                className.equals("android.widget.ListView") ||
-                className.equals("android.widget.GridView")) {
-            try {
-                MobileElement hiddenElement = ((AndroidDriver<AndroidElement>) driver).findElement(MobileBy.AndroidUIAutomator("new UiSelector().descriptionContains(\"EyesAppiumHelper\")"));
-                if (hiddenElement != null) {
-                    hiddenElement.click();
+        int scrollableHeight = 0;
 
-                    String scrollableContentSize = hiddenElement.getText();
-                    try {
-                        scrollableHeight = Integer.valueOf(scrollableContentSize);
-                        logger.verbose("Scrollable height received from EyesAppiumHelper = " + scrollableContentSize);
-                    } catch (NumberFormatException nfe) {
-                        logger.verbose("Could not parse scrollable content height");
+        try {
+            WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            String className = activeScroll.getAttribute("className");
+
+            if (className.equals("android.support.v7.widget.RecyclerView") ||
+                    className.equals("android.widget.ListView") ||
+                    className.equals("android.widget.GridView")) {
+                try {
+                    MobileElement hiddenElement = ((AndroidDriver<AndroidElement>) driver).findElement(MobileBy.AndroidUIAutomator("new UiSelector().descriptionContains(\"EyesAppiumHelper\")"));
+                    if (hiddenElement != null) {
+                        hiddenElement.click();
+
+                        String scrollableContentSize = hiddenElement.getText();
+                        try {
+                            scrollableHeight = Integer.valueOf(scrollableContentSize);
+                            logger.verbose("Scrollable height received from EyesAppiumHelper = " + scrollableContentSize);
+                        } catch (NumberFormatException nfe) {
+                            logger.verbose("Could not parse scrollable content height");
+                        }
                     }
+                } catch (NoSuchElementException | StaleElementReferenceException ignored) {
+                    scrollableHeight = contentSize.scrollableOffset;
+                    logger.verbose("Could not get EyesAppiumHelper element. Return scrollable offset from cached content size (" + scrollableHeight + ")");
                 }
-            } catch (NoSuchElementException | StaleElementReferenceException ignored) {
-                scrollableHeight = contentSize.scrollableOffset;
-                logger.verbose("Could not get EyesAppiumHelper element. Return scrollable offset from cached content size (" + scrollableHeight + ")");
             }
+        } catch (NoSuchElementException ex) {
+            logger.log("WARNING: No active scroll element, so no scrollable height to retrieve");
         }
 
         this.contentSize.scrollableOffset = scrollableHeight == 0 ? contentSize.scrollableOffset : scrollableHeight - contentSize.height;
