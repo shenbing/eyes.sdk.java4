@@ -1,5 +1,6 @@
 package com.applitools.eyes.appium;
 
+import com.applitools.eyes.EyesException;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.Trigger;
@@ -11,14 +12,15 @@ import com.applitools.eyes.triggers.MouseTrigger;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.MobileBy;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.openqa.selenium.*;
+import org.openqa.selenium.remote.RemoteWebElement;
 
 public class EyesAppiumDriver extends EyesWebDriver {
 
@@ -40,7 +42,7 @@ public class EyesAppiumDriver extends EyesWebDriver {
         if (element instanceof EyesRemoteWebElement) {
             throw new Error("Programming error: should not have sent an EyesRemoteWebElement in");
         }
-        return new EyesAppiumElement(logger, this, element);
+        return new EyesAppiumElement(logger, this, element, getDevicePixelRatio());
     }
 
     private Map<String, Object> getCachedSessionDetails () {
@@ -171,5 +173,47 @@ public class EyesAppiumDriver extends EyesWebDriver {
         // Return the image in the requested format.
         screenshot64 = ImageUtils.base64FromImage(screenshot);
         return xOutputType.convertFromBase64Png(screenshot64);
+    }
+
+    @Override
+    public EyesAppiumElement findElement(By by) {
+        WebElement webElement = driver.findElement(by);
+        if (webElement instanceof RemoteWebElement) {
+            EyesAppiumElement appiumElement = new EyesAppiumElement(logger, this, webElement, getDevicePixelRatio());
+
+            // For Remote web elements, we can keep the IDs,
+            // for Id based lookup (mainly used for Javascript related
+            // activities).
+            elementsIds.put(((RemoteWebElement) webElement).getId(), webElement);
+            return appiumElement;
+        } else {
+            throw new EyesException("findElement: Element is not a RemoteWebElement: " + by);
+        }
+    }
+
+    @Override
+    public List<WebElement> findElements(By by) {
+        List<WebElement> foundWebElementsList = driver.findElements(by);
+
+        // This list will contain the found elements wrapped with our class.
+        List<WebElement> resultElementsList =
+                new ArrayList<WebElement>(foundWebElementsList.size());
+
+        for (WebElement currentElement : foundWebElementsList) {
+            if (currentElement instanceof RemoteWebElement) {
+                resultElementsList.add(new EyesAppiumElement(logger, this, currentElement, getDevicePixelRatio()));
+
+                // For Remote web elements, we can keep the IDs
+                elementsIds.put(((RemoteWebElement) currentElement).getId(),
+                        currentElement);
+
+            } else {
+                throw new EyesException(String.format(
+                        "findElements: element is not a RemoteWebElement: %s",
+                        by));
+            }
+        }
+
+        return resultElementsList;
     }
 }

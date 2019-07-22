@@ -10,8 +10,6 @@ import com.applitools.eyes.fluent.ICheckSettings;
 import com.applitools.eyes.fluent.ICheckSettingsInternal;
 import com.applitools.eyes.positioning.RegionProvider;
 import com.applitools.eyes.scaling.FixedScaleProviderFactory;
-import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
-import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshotFactory;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import io.appium.java_client.AppiumDriver;
@@ -151,11 +149,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         return getEyesDriver().getDevicePixelRatio();
     }
 
-    protected EyesWebDriverScreenshot getFullPageScreenshot() {
+    protected EyesAppiumScreenshot getFullPageScreenshot() {
 
         logger.verbose("Full page Appium screenshot requested.");
 
-        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
+        EyesScreenshotFactory screenshotFactory = new EyesAppiumScreenshotFactory(logger, getEyesDriver());
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
         AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getPositionProvider();
@@ -175,11 +173,10 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 //        BufferedImage fullPageImage = algo
 //            .getStitchedRegion(scrollableViewRegion, getStitchOverlap(), regionPositionCompensation);
 
-        return new EyesWebDriverScreenshot(logger, getEyesDriver(), fullPageImage, null,
-            originalScrollViewPosition);
+        return new EyesAppiumScreenshot(logger, getEyesDriver(), fullPageImage);
     }
 
-    protected EyesWebDriverScreenshot getSimpleScreenshot() {
+    protected EyesAppiumScreenshot getSimpleScreenshot() {
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 //        ensureElementVisible(this.targetElement);
 
@@ -202,21 +199,17 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         }
 
         logger.verbose("Creating screenshot object...");
-        return new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
+        return new EyesAppiumScreenshot(logger, getEyesDriver(), screenshotImage);
     }
 
     @Override
     protected MatchResult checkRegion(String name, ICheckSettings checkSettings) {
-        final double scaleRatio = this.getScaleRatio();
         MatchResult result = checkWindowBase(new RegionProvider() {
             @Override
             public Region getRegion() {
                 Point p = targetElement.getLocation();
-                p.y = p.y - driver.getStatusBarHeight();
-                Point ps = new Point((int) Math.round(p.x * scaleRatio), (int) Math.round(p.y * scaleRatio));
                 Dimension d = targetElement.getSize();
-                Dimension ds = new Dimension((int) Math.round(d.width * scaleRatio), (int) Math.round(d.height * scaleRatio));
-                return new Region(ps.getX(), ps.getY(), ds.getWidth(), ds.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+                return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
             }
         }, name, false, checkSettings);
         logger.verbose("Done! trying to scroll back to original position.");
@@ -238,7 +231,7 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
             BufferedImage subScreenshotImage = ImageUtils.scaleImage(ImageUtils.getImagePart(image, region),
                     1/driver.getEyes().getDevicePixelRatio());
 
-            EyesWebDriverScreenshot result = new EyesWebDriverScreenshot(logger, driver, subScreenshotImage,
+            EyesAppiumScreenshot result = new EyesAppiumScreenshot(logger, driver, subScreenshotImage,
                     new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
 
             logger.verbose("Done!");
