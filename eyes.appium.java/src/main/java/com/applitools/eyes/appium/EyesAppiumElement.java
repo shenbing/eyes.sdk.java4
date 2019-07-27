@@ -29,22 +29,17 @@ public class EyesAppiumElement extends EyesRemoteWebElement {
     @Override
     public Dimension getSize() {
         Dimension size = super.getSize();
-        if (pixelRatio <= 1.0) {
+        if (pixelRatio == 1.0) {
             return size;
         }
         int scaledWidth;
         int scaledHeight;
         if (driver.getRemoteWebDriver() instanceof IOSDriver) {
-            if (driver.getEyes().getForceFullPageScreenshot()) {
-                scaledWidth = (int) Math.ceil(webElement.getSize().getWidth()*pixelRatio);
-                scaledHeight = (int) Math.ceil(webElement.getSize().getHeight()*pixelRatio);
-            } else {
-                scaledWidth = webElement.getSize().getWidth();
-                scaledHeight = webElement.getSize().getHeight();
-            }
+            scaledWidth = webElement.getSize().getWidth();
+            scaledHeight = webElement.getSize().getHeight();
         } else {
-            scaledWidth = (int) Math.ceil(webElement.getSize().getWidth()/pixelRatio);
-            scaledHeight = (int) Math.ceil(webElement.getSize().getHeight()/pixelRatio);
+            scaledWidth = (int) Math.ceil(webElement.getSize().getWidth()*pixelRatio);
+            scaledHeight = (int) Math.ceil(webElement.getSize().getHeight()*pixelRatio);
         }
         return new Dimension(scaledWidth, scaledHeight);
     }
@@ -68,22 +63,17 @@ public class EyesAppiumElement extends EyesRemoteWebElement {
     public Point getLocation() {
         Point location = super.getLocation();
         location = new Point(location.getX(), location.getY() - driver.getStatusBarHeight());
-        if (pixelRatio <= 1.0) {
+        if (pixelRatio == 1.0) {
             return location;
         }
         int scaledX;
         int scaledY;
         if (driver.getRemoteWebDriver() instanceof IOSDriver) {
-            if (driver.getEyes().getForceFullPageScreenshot()) {
-                scaledX = (int) Math.ceil(location.getX()*pixelRatio);
-                scaledY = (int) Math.ceil(location.getY()*pixelRatio);
-            } else {
-                scaledX = location.getX();
-                scaledY = location.getY();
-            }
+            scaledX = location.getX();
+            scaledY = location.getY();
         } else {
-            scaledX = (int) Math.ceil(location.getX()/pixelRatio);
-            scaledY = (int) Math.ceil(location.getY()/pixelRatio);
+            scaledX = (int) Math.ceil(location.getX()*pixelRatio);
+            scaledY = (int) Math.ceil(location.getY()*pixelRatio);
         }
         return new Point(scaledX, scaledY);
     }

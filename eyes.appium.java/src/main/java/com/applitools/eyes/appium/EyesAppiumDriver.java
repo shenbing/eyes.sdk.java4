@@ -42,7 +42,7 @@ public class EyesAppiumDriver extends EyesWebDriver {
         if (element instanceof EyesRemoteWebElement) {
             throw new Error("Programming error: should not have sent an EyesRemoteWebElement in");
         }
-        return new EyesAppiumElement(logger, this, element, getDevicePixelRatio());
+        return new EyesAppiumElement(logger, this, element, 1/getDevicePixelRatio());
     }
 
     private Map<String, Object> getCachedSessionDetails () {
@@ -179,7 +179,7 @@ public class EyesAppiumDriver extends EyesWebDriver {
     public EyesAppiumElement findElement(By by) {
         WebElement webElement = driver.findElement(by);
         if (webElement instanceof RemoteWebElement) {
-            EyesAppiumElement appiumElement = new EyesAppiumElement(logger, this, webElement, getDevicePixelRatio());
+            EyesAppiumElement appiumElement = new EyesAppiumElement(logger, this, webElement, 1/getDevicePixelRatio());
 
             // For Remote web elements, we can keep the IDs,
             // for Id based lookup (mainly used for Javascript related
@@ -201,7 +201,7 @@ public class EyesAppiumDriver extends EyesWebDriver {
 
         for (WebElement currentElement : foundWebElementsList) {
             if (currentElement instanceof RemoteWebElement) {
-                resultElementsList.add(new EyesAppiumElement(logger, this, currentElement, getDevicePixelRatio()));
+                resultElementsList.add(new EyesAppiumElement(logger, this, currentElement, 1/getDevicePixelRatio()));
 
                 // For Remote web elements, we can keep the IDs
                 elementsIds.put(((RemoteWebElement) currentElement).getId(),
