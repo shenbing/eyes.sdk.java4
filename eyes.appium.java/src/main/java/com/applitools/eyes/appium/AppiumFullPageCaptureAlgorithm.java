@@ -383,7 +383,7 @@ public class AppiumFullPageCaptureAlgorithm {
             logger.verbose("Image was already bigger than entire size, so returning straightaway");
             originProvider.restoreState(originalPosition);
 
-            return image;
+            return ImageUtils.scaleImage(image, scaleProvider);
         }
 
         // Otherwise, make a big image to stitch smaller parts into
