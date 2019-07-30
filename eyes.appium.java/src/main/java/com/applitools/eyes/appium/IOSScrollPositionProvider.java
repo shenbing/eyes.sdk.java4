@@ -3,8 +3,16 @@ package com.applitools.eyes.appium;
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.positioning.PositionMemento;
+
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+
+import io.appium.java_client.MobileBy;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
+
+import javax.annotation.Nullable;
 
 public class IOSScrollPositionProvider extends AppiumScrollPositionProvider {
 
@@ -119,4 +127,34 @@ public class IOSScrollPositionProvider extends AppiumScrollPositionProvider {
         // Do not need this method
     }
 
+    @Nullable
+    @Override
+    protected ContentSize getCachedContentSize() {
+        try {
+            WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            if (activeScroll.getAttribute("type").equals("XCUIElementTypeTable")) {
+                try {
+                    contentSize = EyesAppiumUtils.getContentSize(driver, activeScroll);
+                    List<WebElement> list = activeScroll.findElements(MobileBy.xpath("//XCUIElementTypeTable[1]/*"));
+                    WebElement lastElement = list.get(list.size()-1);
+                    contentSize.scrollableOffset = lastElement.getLocation().getY() + lastElement.getSize().getHeight();
+                    logger.verbose("Retrieved contentSize, it is: " + contentSize);
+                } catch (IOException e) {
+                    logger.log("WARNING: could not retrieve content size from active scroll element");
+                }
+            } else {
+                if (contentSize == null) {
+                    try {
+                        contentSize = EyesAppiumUtils.getContentSize(driver, activeScroll);
+                        logger.verbose("Retrieved contentSize, it is: " + contentSize);
+                    } catch (IOException e) {
+                        logger.log("WARNING: could not retrieve content size from active scroll element");
+                    }
+                }
+            }
+        } catch (NoSuchElementException e) {
+            logger.log("WARNING: No active scroll element, so no content size to retrieve");
+        }
+        return contentSize;
+    }
 }

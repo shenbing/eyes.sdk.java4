@@ -140,7 +140,7 @@ public class AppiumFullPageCaptureAlgorithm {
         while (true);
 
         cleanupStitch(originalStitchedState, lastSuccessfulLocation, lastSuccessfulPartSize, entireSize);
-
+        moveToTopLeft();
     }
 
 
@@ -177,7 +177,7 @@ public class AppiumFullPageCaptureAlgorithm {
         // TODO examine the while loop condition logic above, currently we will stop scrolling if
         // we get to 0 on EITHER the x or y axis; shouldn't we need to get there on both?
 
-        if (currentPosition.getX() != 0 || currentPosition.getY() != 0) {
+        if (currentPosition.getY() > 0) {
             originProvider.restoreState(originalPosition);
             throw new EyesException("Couldn't set position to the top/left corner!");
         }
