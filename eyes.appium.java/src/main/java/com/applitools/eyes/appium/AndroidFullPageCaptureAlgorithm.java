@@ -5,7 +5,6 @@ import com.applitools.eyes.capture.EyesScreenshotFactory;
 import com.applitools.eyes.capture.ImageProvider;
 import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.selenium.positioning.NullRegionPositionCompensation;
-import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
 import com.applitools.utils.GeneralUtils;
 
 import java.awt.image.BufferedImage;
@@ -80,6 +79,8 @@ public class AndroidFullPageCaptureAlgorithm extends AppiumFullPageCaptureAlgori
 
             captureAndStitchCurrentPart(regionToCrop, scrollViewRegion);
         }
+
+        moveToTopLeft();
     }
 
     @SuppressWarnings("Duplicates")
@@ -99,10 +100,5 @@ public class AndroidFullPageCaptureAlgorithm extends AppiumFullPageCaptureAlgori
 
         stitchPartIntoContainer(partImage);
         return new RectangleSize(partImage.getWidth(), partImage.getHeight());
-    }
-
-    @Override
-    protected void setRegionInScreenshot(BufferedImage image, Region region, RegionPositionCompensation regionPositionCompensation) {
-        regionInScreenshot = region;
     }
 }
