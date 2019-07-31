@@ -32,16 +32,16 @@ public class EyesAppiumElement extends EyesRemoteWebElement {
         if (pixelRatio == 1.0) {
             return size;
         }
-        int scaledWidth;
-        int scaledHeight;
+        int unscaledWidth;
+        int unscaledHeight;
         if (driver.getRemoteWebDriver() instanceof IOSDriver) {
-            scaledWidth = webElement.getSize().getWidth();
-            scaledHeight = webElement.getSize().getHeight();
+            unscaledWidth = webElement.getSize().getWidth();
+            unscaledHeight = webElement.getSize().getHeight();
         } else {
-            scaledWidth = (int) Math.ceil(webElement.getSize().getWidth()*pixelRatio);
-            scaledHeight = (int) Math.ceil(webElement.getSize().getHeight()*pixelRatio);
+            unscaledWidth = (int) Math.ceil(webElement.getSize().getWidth()*pixelRatio);
+            unscaledHeight = (int) Math.ceil(webElement.getSize().getHeight()*pixelRatio);
         }
-        return new Dimension(scaledWidth, scaledHeight);
+        return new Dimension(unscaledWidth, unscaledHeight);
     }
 
     @Override
@@ -66,15 +66,15 @@ public class EyesAppiumElement extends EyesRemoteWebElement {
         if (pixelRatio == 1.0) {
             return location;
         }
-        int scaledX;
-        int scaledY;
+        int unscaledX;
+        int unscaledY;
         if (driver.getRemoteWebDriver() instanceof IOSDriver) {
-            scaledX = location.getX();
-            scaledY = location.getY();
+            unscaledX = location.getX();
+            unscaledY = location.getY();
         } else {
-            scaledX = (int) Math.ceil(location.getX()*pixelRatio);
-            scaledY = (int) Math.ceil(location.getY()*pixelRatio);
+            unscaledX = (int) Math.ceil(location.getX()*pixelRatio);
+            unscaledY = (int) Math.ceil(location.getY()*pixelRatio);
         }
-        return new Point(scaledX, scaledY);
+        return new Point(unscaledX, unscaledY);
     }
 }
