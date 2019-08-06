@@ -146,6 +146,11 @@ public class EyesImagesScreenshot extends EyesScreenshot {
                 CoordinatesType.SCREENSHOT_AS_IS);
     }
 
+    @Override
+    public Location getLocationInScreenshot(Location location, Location originalLocation, CoordinatesType coordinatesType) throws OutOfBoundsException {
+        return getLocationInScreenshot(location, coordinatesType);
+    }
+
     /**
      * Get the intersected region.
      *
