@@ -2676,4 +2676,8 @@ public class Eyes extends EyesBase {
     public boolean isSendDom() {
         return !isMobileDevice(getEyesDriver()) && super.isSendDom();
     }
+
+    public Location getElementOriginalLocation(WebElement element) {
+        return new Location(element.getLocation().getX(), element.getLocation().getY());
+    }
 }

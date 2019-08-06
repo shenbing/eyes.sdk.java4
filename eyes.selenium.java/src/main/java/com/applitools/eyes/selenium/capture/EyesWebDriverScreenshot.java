@@ -465,6 +465,11 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     }
 
     @Override
+    public Location getLocationInScreenshot(Location location, Location originalLocation, CoordinatesType coordinatesType) throws OutOfBoundsException {
+        return this.getLocationInScreenshot(location, coordinatesType);
+    }
+
+    @Override
     public Region getIntersectedRegion(Region region,
                                        CoordinatesType resultCoordinatesType) {
 

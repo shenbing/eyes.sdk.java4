@@ -2,26 +2,25 @@ package com.applitools.eyes.appium;
 
 import com.applitools.eyes.*;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
-import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ImageUtils;
 
 import java.awt.image.BufferedImage;
 
 public class EyesAppiumScreenshot extends EyesWebDriverScreenshot {
 
-    private final EyesWebDriver driver;
+    private final EyesAppiumDriver driver;
 
-    public EyesAppiumScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image) {
+    public EyesAppiumScreenshot(Logger logger, EyesAppiumDriver driver, BufferedImage image) {
         super(logger, driver, image);
         this.driver = driver;
     }
 
-    public EyesAppiumScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image, Region screenshotRegion) {
+    public EyesAppiumScreenshot(Logger logger, EyesAppiumDriver driver, BufferedImage image, Region screenshotRegion) {
         super(logger, driver, image, screenshotRegion);
         this.driver = driver;
     }
 
-    public EyesAppiumScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image, RectangleSize entireFrameSize) {
+    public EyesAppiumScreenshot(Logger logger, EyesAppiumDriver driver, BufferedImage image, RectangleSize entireFrameSize) {
         super(logger, driver, image, entireFrameSize);
         this.driver = driver;
     }
@@ -29,6 +28,15 @@ public class EyesAppiumScreenshot extends EyesWebDriverScreenshot {
     @Override
     public Location getLocationInScreenshot(Location location, CoordinatesType coordinatesType) throws OutOfBoundsException {
         return location;
+    }
+
+    @Override
+    public Location getLocationInScreenshot(Location location, Location originalLocation, CoordinatesType coordinatesType) throws OutOfBoundsException {
+        if (location.getY() < originalLocation.getY()) {
+            return location;
+        } else {
+            return new Location(location.getX(), location.getY() - driver.getStatusBarHeight());
+        }
     }
 
     @Override
