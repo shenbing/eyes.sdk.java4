@@ -2,6 +2,7 @@ package com.applitools.eyes.selenium.fluent;
 
 import com.applitools.eyes.*;
 import com.applitools.eyes.fluent.GetRegion;
+import com.applitools.eyes.selenium.Eyes;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
@@ -23,6 +24,7 @@ public class IgnoreRegionByElement implements GetRegion {
 
         // Element's coordinates are context relative, so we need to convert them first.
         Location adjustedLocation = screenshot.getLocationInScreenshot(new Location(locationAsPoint.getX(), locationAsPoint.getY()),
+                ((Eyes)eyesBase).getElementOriginalLocation(element),
                 CoordinatesType.CONTEXT_RELATIVE);
 
         List<Region> value = new ArrayList<>();

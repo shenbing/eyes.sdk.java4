@@ -14,10 +14,12 @@ import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import io.appium.java_client.AppiumDriver;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 
@@ -238,6 +240,16 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
             return result;
         } else {
             return screenshot.getSubScreenshot(region, false);
+        }
+    }
+
+    @Override
+    public Location getElementOriginalLocation(WebElement element) {
+        try {
+            ContentSize contentSize = EyesAppiumUtils.getContentSize(driver.getRemoteWebDriver(), element);
+            return new Location(contentSize.left, contentSize.top);
+        } catch (IOException ignored) {
+            return new Location(element.getLocation().getX(), element.getLocation().getY());
         }
     }
 

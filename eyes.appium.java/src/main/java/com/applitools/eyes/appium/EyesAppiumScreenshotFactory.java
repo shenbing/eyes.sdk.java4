@@ -10,9 +10,9 @@ import java.awt.image.BufferedImage;
 public class EyesAppiumScreenshotFactory implements EyesScreenshotFactory {
 
     private final Logger logger;
-    private final EyesWebDriver driver;
+    private final EyesAppiumDriver driver;
 
-    public EyesAppiumScreenshotFactory(Logger logger, EyesWebDriver driver) {
+    public EyesAppiumScreenshotFactory(Logger logger, EyesAppiumDriver driver) {
         this.logger = logger;
         this.driver = driver;
     }

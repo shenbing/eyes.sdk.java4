@@ -64,6 +64,22 @@ public abstract class EyesScreenshot {
                                                      CoordinatesType coordinatesType) throws OutOfBoundsException;
 
     /**
+     * Calculates the location in the screenshot of the location given as
+     * parameter.
+     *
+     * @param location         The location as coordinates inside the current frame.
+     * @param originalLocation The original location.
+     * @param coordinatesType  The coordinates type of {@code location}.
+     * @return The corresponding location inside the screenshot,
+     * in screenshot as-is coordinates type.
+     * @throws com.applitools.eyes.OutOfBoundsException If the location is
+     *                                                  not inside the frame's region in the screenshot.
+     */
+    public abstract Location getLocationInScreenshot(Location location,
+                                                     Location originalLocation,
+                                                     CoordinatesType coordinatesType) throws OutOfBoundsException;
+
+    /**
      * Get the intersection of the given region with the screenshot.
      * @param region          The region to intersect.
      * @param coordinatesType The coordinates type of {@code region}.
